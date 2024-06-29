@@ -1,170 +1,201 @@
 import streamlit as st
+import openai
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import re
-from transformers import pipeline
-from langchain.llms import OpenAI
-from langchain.chains import ConversationChain
+import time
 from langchain.memory import ConversationBufferMemory
-from langchain.prompts import PromptTemplate
-import random
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 nltk.download('vader_lexicon', quiet=True)
 nltk.download('punkt', quiet=True)
-
-# Initialize the summarization pipeline
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
 # Set Streamlit page configuration
 st.set_page_config(page_title='Motivational Interviewing Chatbot', layout='wide')
 
 # Initialize session states
-if "generated" not in st.session_state:
-    st.session_state["generated"] = []
-if "past" not in st.session_state:
-    st.session_state["past"] = []
-if "input" not in st.session_state:
-    st.session_state["input"] = ""
-if "stored_session" not in st.session_state:
-    st.session_state["stored_session"] = []
-if "user_name" not in st.session_state:
-    st.session_state["user_name"] = ""
-if "step" not in st.session_state:
-    st.session_state["step"] = 0
-if "confidence" not in st.session_state:
-    st.session_state["confidence"] = 0
-if "importance" not in st.session_state:
-    st.session_state["importance"] = 0
-if "change_goal" not in st.session_state:
-    st.session_state["change_goal"] = ""
+if "chat_log" not in st.session_state:
+    st.session_state.chat_log = []
+if "user_inputs" not in st.session_state:
+    st.session_state.user_inputs = {}
+if "current_step" not in st.session_state:
+    st.session_state.current_step = 0
+if "thread_id" not in st.session_state:
+    st.session_state.thread_id = None
+if "openai_client" not in st.session_state:
+    st.session_state.openai_client = None
+
+# OpenAI Assistant ID (replace with your actual Assistant ID)
+ASSISTANT_ID = "asst_your_assistant_id_here"
+
+def initialize_openai_client():
+    api_key = st.secrets["openai_api_key"]
+    st.session_state.openai_client = openai.OpenAI(api_key=api_key)
+    # Create a thread for the conversation
+    thread = st.session_state.openai_client.beta.threads.create()
+    st.session_state.thread_id = thread.id
+
+def get_ai_response(user_input):
+    if not st.session_state.thread_id:
+        initialize_openai_client()
+    
+    # Add the user's message to the thread
+    st.session_state.openai_client.beta.threads.messages.create(
+        thread_id=st.session_state.thread_id,
+        role="user",
+        content=user_input
+    )
+
+    # Create a run
+    run = st.session_state.openai_client.beta.threads.runs.create(
+        thread_id=st.session_state.thread_id,
+        assistant_id=ASSISTANT_ID
+    )
+
+    # Wait for the run to complete
+    while run.status != 'completed':
+        time.sleep(1)
+        run = st.session_state.openai_client.beta.threads.runs.retrieve(
+            thread_id=st.session_state.thread_id,
+            run_id=run.id
+        )
+
+    # Retrieve the assistant's response
+    messages = st.session_state.openai_client.beta.threads.messages.list(
+        thread_id=st.session_state.thread_id
+    )
+    assistant_message = next(msg for msg in messages if msg.role == "assistant")
+    return assistant_message.content[0].text.value
+
+def sentiment_analysis(text):
+    sia = SentimentIntensityAnalyzer()
+    return sia.polarity_scores(text)['compound']
+
+def analyze_change_talk(text):
+    change_talk_categories = {
+        "Desire": ["want to", "would like to", "wish"],
+        "Ability": ["could", "can", "might be able to"],
+        "Reasons": ["would probably", "need to"],
+        "Need": ["ought to", "have to", "should"],
+        "Commitment": ["am going to", "promise", "intend to"],
+        "Activation": ["am ready to", "will start"],
+        "Taking Steps": ["actually went", "started"]
+    }
+    
+    results = {}
+    for category, phrases in change_talk_categories.items():
+        matches = [phrase for phrase in phrases if phrase in text.lower()]
+        if matches:
+            results[category] = matches
+    
+    return results
 
 def get_user_name():
     user_name = st.text_input("Before we begin, what's your name?")
     if user_name:
-        st.session_state["user_name"] = user_name
-        st.session_state["step"] = 1
+        st.session_state.user_inputs['name'] = user_name
+        st.session_state.current_step = 1
         st.experimental_rerun()
 
 def confidence_importance_ruler():
-    st.write(f"Hello {st.session_state['user_name']}, let's start by assessing your confidence and the importance of the change you want to make.")
-    st.session_state["change_goal"] = st.text_input("What change are you considering?")
-    st.session_state["confidence"] = st.slider("On a scale of 0-10, how confident are you in your ability to make this change?", 0, 10, 5)
-    st.session_state["importance"] = st.slider("On a scale of 0-10, how important is this change to you?", 0, 10, 5)
+    st.write(f"Hello {st.session_state.user_inputs['name']}, let's assess your confidence and the importance of the change you want to make.")
     
-    if st.button("Continue"):
-        st.session_state["step"] = 2
+    change_goal = st.text_input("What change are you considering?", key="change_goal")
+    confidence = st.slider("On a scale of 0-10, how confident are you in your ability to make this change?", 0, 10, 5, key="confidence")
+    importance = st.slider("On a scale of 0-10, how important is this change to you?", 0, 10, 5, key="importance")
+    
+    if st.button("Continue", key="ruler_continue"):
+        st.session_state.user_inputs['change_goal'] = change_goal
+        st.session_state.user_inputs['confidence'] = confidence
+        st.session_state.user_inputs['importance'] = importance
+        st.session_state.current_step = 2
         st.experimental_rerun()
 
 def ask_ruler_questions():
-    st.write(f"Thank you for sharing, {st.session_state['user_name']}. Let's explore your answers a bit more.")
+    st.write(f"Thank you for sharing, {st.session_state.user_inputs['name']}. Let's explore your answers a bit more.")
     
-    confidence_why = st.text_area(f"Why are you a {st.session_state['confidence']} on the confidence scale and not a zero?")
-    confidence_increase = st.text_area(f"What would it take for you to get from {st.session_state['confidence']} to {min(st.session_state['confidence']+1, 10)} on the confidence scale?")
+    confidence_why = st.text_area(f"Why are you a {st.session_state.user_inputs['confidence']} on the confidence scale and not a zero?", key="confidence_why")
+    confidence_increase = st.text_area(f"What would it take for you to get from {st.session_state.user_inputs['confidence']} to {min(st.session_state.user_inputs['confidence']+1, 10)} on the confidence scale?", key="confidence_increase")
     
-    importance_why = st.text_area(f"Why are you a {st.session_state['importance']} on the importance scale and not a zero?")
-    importance_increase = st.text_area(f"What would it take for you to get from {st.session_state['importance']} to {min(st.session_state['importance']+1, 10)} on the importance scale?")
+    importance_why = st.text_area(f"Why are you a {st.session_state.user_inputs['importance']} on the importance scale and not a zero?", key="importance_why")
+    importance_increase = st.text_area(f"What would it take for you to get from {st.session_state.user_inputs['importance']} to {min(st.session_state.user_inputs['importance']+1, 10)} on the importance scale?", key="importance_increase")
     
-    if st.button("Continue to Key Question"):
-        st.session_state["ruler_responses"] = {
-            "confidence_why": confidence_why,
-            "confidence_increase": confidence_increase,
-            "importance_why": importance_why,
-            "importance_increase": importance_increase
-        }
-        st.session_state["step"] = 3
+    if st.button("Continue to Key Question", key="ruler_questions_continue"):
+        st.session_state.user_inputs['confidence_why'] = confidence_why
+        st.session_state.user_inputs['confidence_increase'] = confidence_increase
+        st.session_state.user_inputs['importance_why'] = importance_why
+        st.session_state.user_inputs['importance_increase'] = importance_increase
+        st.session_state.current_step = 3
         st.experimental_rerun()
 
 def ask_key_question():
-    key_questions = [
-        "So, what's next for you?",
-        "So, where do you go from here?",
-        "So, what do you think you will do?",
-        "So, what are you going to do?"
-    ]
-    question = random.choice(key_questions)
-    st.write(f"{st.session_state['user_name']}, {question}")
-    response = st.text_area("Your response:")
-    if st.button("Continue to Planning"):
-        st.session_state["key_question_response"] = response
-        st.session_state["step"] = 4
+    key_question = get_ai_response(f"Generate a key question to help {st.session_state.user_inputs['name']} determine their next steps regarding their goal: {st.session_state.user_inputs['change_goal']}")
+    st.write(f"{st.session_state.user_inputs['name']}, {key_question}")
+    response = st.text_area("Your response:", key="key_question_response")
+    if st.button("Continue to Planning", key="key_question_continue"):
+        st.session_state.user_inputs['key_question_response'] = response
+        st.session_state.current_step = 4
         st.experimental_rerun()
 
 def make_plan():
-    st.write(f"Great, {st.session_state['user_name']}! Let's create a plan for your change.")
+    st.write(f"Great, {st.session_state.user_inputs['name']}! Let's create a plan for your change.")
     
-    initial_steps = st.text_area("What are the initial steps you'll take to start your plan?")
-    important_focus = st.text_area("What are the 2-3 most important things to focus on to make your plan a success?")
-    support_system = st.text_area("Who might help you in making this change?")
-    assistance_needed = st.text_area("How can I (as your AI coach) help you successfully make this change?")
-    future_conversations = st.text_area("When and how would you like to have follow-up conversations about your progress?")
+    plan_prompt = f"Create a structured plan for {st.session_state.user_inputs['name']} to achieve their goal of {st.session_state.user_inputs['change_goal']}. Include initial steps, important focus areas, potential support system, and how you (as an AI coach) can assist."
+    ai_plan = get_ai_response(plan_prompt)
     
-    if st.button("Finish Plan"):
-        st.session_state["plan"] = {
-            "initial_steps": initial_steps,
-            "important_focus": important_focus,
-            "support_system": support_system,
-            "assistance_needed": assistance_needed,
-            "future_conversations": future_conversations
-        }
-        st.session_state["step"] = 5
+    st.write("Here's a suggested plan based on our conversation:")
+    st.write(ai_plan)
+    
+    user_plan = st.text_area("Feel free to modify this plan or write your own:", value=ai_plan, height=300, key="user_plan")
+    
+    if st.button("Finish Plan", key="finish_plan"):
+        st.session_state.user_inputs['plan'] = user_plan
+        st.session_state.current_step = 5
         st.experimental_rerun()
 
 def summarize_session():
-    all_text = (
-        f"Change Goal: {st.session_state['change_goal']}\n"
-        f"Confidence: {st.session_state['confidence']}/10\n"
-        f"Importance: {st.session_state['importance']}/10\n"
-        f"Confidence Why: {st.session_state['ruler_responses']['confidence_why']}\n"
-        f"Confidence Increase: {st.session_state['ruler_responses']['confidence_increase']}\n"
-        f"Importance Why: {st.session_state['ruler_responses']['importance_why']}\n"
-        f"Importance Increase: {st.session_state['ruler_responses']['importance_increase']}\n"
-        f"Key Question Response: {st.session_state['key_question_response']}\n"
-        f"Plan:\n"
-        f"  Initial Steps: {st.session_state['plan']['initial_steps']}\n"
-        f"  Important Focus: {st.session_state['plan']['important_focus']}\n"
-        f"  Support System: {st.session_state['plan']['support_system']}\n"
-        f"  Assistance Needed: {st.session_state['plan']['assistance_needed']}\n"
-        f"  Future Conversations: {st.session_state['plan']['future_conversations']}\n"
-    )
+    all_text = "\n".join(str(value) for value in st.session_state.user_inputs.values())
     
-    summary = summarizer(all_text, max_length=300, min_length=100, do_sample=False)[0]['summary_text']
+    sentiment_score = sentiment_analysis(all_text)
+    change_talk = analyze_change_talk(all_text)
+    
+    summary_prompt = f"Summarize the conversation with {st.session_state.user_inputs['name']} about their goal to {st.session_state.user_inputs['change_goal']}. Include insights on their confidence, importance, and plan."
+    ai_summary = get_ai_response(summary_prompt)
     
     st.write("Here's a summary of our conversation:")
-    st.write(summary)
+    st.write(ai_summary)
     
-    if st.button("Reassess Confidence and Importance"):
-        st.session_state["step"] = 1
+    st.write("\nChange Talk Analysis:")
+    for category, phrases in change_talk.items():
+        st.write(f"{category}: {', '.join(phrases)}")
+    
+    st.write(f"\nOverall Sentiment: {sentiment_score:.2f} (-1 to 1 scale)")
+    
+    if st.button("Reassess Confidence and Importance", key="reassess"):
+        st.session_state.current_step = 1
         st.experimental_rerun()
     
-    email = st.text_input("If you'd like to receive this summary by email, please enter your email address:")
-    if email and st.button("Send Summary"):
-        send_email(email, summary)
+    email = st.text_input("If you'd like to receive this summary by email, please enter your email address:", key="email")
+    if email and st.button("Send Summary", key="send_summary"):
+        # Implement email sending functionality here
         st.write("Summary sent to your email!")
-
-def send_email(to_email, summary):
-    # This is a placeholder function. In a real application, you'd need to set up a proper email sending service.
-    st.write(f"Email sending simulation: Sending summary to {to_email}")
-    st.write("Summary content:")
-    st.write(summary)
 
 def main():
     st.title("Motivational Interviewing Chatbot")
     
-    if st.session_state["step"] == 0:
-        get_user_name()
-    elif st.session_state["step"] == 1:
-        confidence_importance_ruler()
-    elif st.session_state["step"] == 2:
-        ask_ruler_questions()
-    elif st.session_state["step"] == 3:
-        ask_key_question()
-    elif st.session_state["step"] == 4:
-        make_plan()
-    elif st.session_state["step"] == 5:
-        summarize_session()
+    steps = [get_user_name, confidence_importance_ruler, ask_ruler_questions, ask_key_question, make_plan, summarize_session]
+    
+    # Sidebar for navigation
+    st.sidebar.title("Navigation")
+    for i, step_func in enumerate(steps):
+        if st.sidebar.button(f"Step {i+1}: {step_func.__name__}", key=f"nav_{i}"):
+            st.session_state.current_step = i
+    
+    # Main content
+    current_step = st.session_state.current_step
+    steps[current_step]()
+    
+    # Progress bar
+    st.progress((current_step + 1) / len(steps))
 
 if __name__ == "__main__":
     main()
