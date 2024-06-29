@@ -9,7 +9,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-import os
 
 # Initialize NLTK
 nltk.download('vader_lexicon', quiet=True)
@@ -62,7 +61,7 @@ if "importance" not in st.session_state:
 # Initialize OpenAI client
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# Updated Assistant ID
+# Assistant ID for DecisionBalanceandPlan
 ASSISTANT_ID = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"
 
 def create_thread_if_not_exists():
