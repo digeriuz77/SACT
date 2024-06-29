@@ -1,8 +1,6 @@
 import streamlit as st
 import openai
 from openai import OpenAI
-from openai import AssistantEventHandler
-from typing_extensions import override
 import time
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
@@ -52,33 +50,19 @@ if "user_id" not in st.session_state:
 # Initialize OpenAI client
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# Assistant ID (replace with your actual Assistant ID)
-ASSISTANT_ID = "asst_your_assistant_id_here"
-
-class ChatEventHandler(AssistantEventHandler):
-    def __init__(self):
-        self.full_response = ""
-    
-    @override
-    def on_text_created(self, text) -> None:
-        pass
-    
-    @override
-    def on_text_delta(self, delta, snapshot):
-        self.full_response += delta.value
-        st.session_state.chat_history[-1]["content"] = self.full_response
-        st.experimental_rerun()
+# Assistant ID for DecisionBalanceandPlan
+ASSISTANT_ID = "asst_J7TcXqBWKeZdhdiS8YigHCik"
 
 def create_thread_if_not_exists():
     if not st.session_state.thread_id:
         thread = client.beta.threads.create()
         st.session_state.thread_id = thread.id
 
-def add_message_to_thread(role, content):
+def add_message_to_thread(content):
     create_thread_if_not_exists()
     message = client.beta.threads.messages.create(
         thread_id=st.session_state.thread_id,
-        role=role,
+        role="user",
         content=content
     )
     return message
@@ -91,16 +75,22 @@ def run_assistant(instructions=None):
         instructions=instructions
     )
     
-    st.session_state.chat_history.append({"role": "assistant", "content": ""})
-    
-    with st.spinner("Thinking..."):
-        event_handler = ChatEventHandler()
-        with client.beta.threads.runs.stream(
+    while True:
+        run_status = client.beta.threads.runs.retrieve(
             thread_id=st.session_state.thread_id,
-            run_id=run.id,
-            event_handler=event_handler,
-        ) as stream:
-            stream.until_done()
+            run_id=run.id
+        )
+        if run_status.status == 'completed':
+            break
+        time.sleep(1)
+    
+    messages = client.beta.threads.messages.list(
+        thread_id=st.session_state.thread_id
+    )
+    
+    assistant_message = messages.data[0].content[0].text.value
+    st.session_state.chat_history.append({"role": "assistant", "content": assistant_message})
+    return assistant_message
 
 def analyze_sentiment(text):
     sia = SentimentIntensityAnalyzer()
@@ -132,8 +122,8 @@ def main():
         st.session_state.chat_history.append({"role": "user", "content": user_input})
         
         # Add message to thread and run assistant
-        add_message_to_thread("user", user_input)
-        run_assistant()
+        add_message_to_thread(user_input)
+        assistant_response = run_assistant()
 
     # Display chat history
     for message in st.session_state.chat_history:
