@@ -11,55 +11,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 import random
 
-# Initialize NLTK
-nltk.download('vader_lexicon', quiet=True)
-
-# Streamlit configuration
-st.set_page_config(page_title="Motivational Interviewing Chatbot", layout="wide")
-
-# Custom color scheme
-PRIMARY_COLOR = "#4CAF50"  # Green
-SECONDARY_COLOR = "#2196F3"  # Blue
-BACKGROUND_COLOR = "#F1F8E9"  # Light green
-
-# Custom CSS
-st.markdown(f"""
-    <style>
-    .stApp {{
-        background-color: {BACKGROUND_COLOR};
-    }}
-    .stButton>button {{
-        color: white;
-        background-color: {PRIMARY_COLOR};
-        border-radius: 20px;
-    }}
-    .stTextInput>div>div>input {{
-        border-radius: 20px;
-    }}
-    .sentiment-box {{
-        padding: 10px;
-        border-radius: 5px;
-        background-color: {SECONDARY_COLOR};
-        color: white;
-        display: inline-block;
-    }}
-    .avatar {{
-        width: 50px;
-        height: 50px;
-        margin-right: 10px;
-    }}
-    </style>
-""", unsafe_allow_html=True)
-
-# 8-bit pixel avatar (you can replace this with an actual image URL)
-AVATAR_HTML = """
-<svg class="avatar" viewBox="0 0 100 100">
-    <rect x="0" y="0" width="100" height="100" fill="#FFD700"/>
-    <rect x="30" y="30" width="15" height="15" fill="#000000"/>
-    <rect x="55" y="30" width="15" height="15" fill="#000000"/>
-    <rect x="40" y="60" width="20" height="10" fill="#FF0000"/>
-</svg>
-"""
+# ... (keep the previous imports and configuration code)
 
 # Initialize session state
 def init_session_state():
@@ -77,6 +29,8 @@ def init_session_state():
         st.session_state.importance = 5
     if "conversation_started" not in st.session_state:
         st.session_state.conversation_started = False
+    if "assistant_id" not in st.session_state:
+        st.session_state.assistant_id = None
 
 # Call the initialization function
 init_session_state()
@@ -87,31 +41,77 @@ client = OpenAI(
     default_headers={"OpenAI-Beta": "assistants=v2"}
 )
 
-# Assistant ID for DecisionBalanceandPlan
-ASSISTANT_ID = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"
+def create_or_update_assistant():
+    assistant_name = "Motivational Interviewing Assistant"
+    model = "gpt-3.5-turbo-0125"
+    instructions = """You are a motivational interviewing assistant. Your role is to help users explore their readiness to change, 
+    increase their motivation, and develop a plan for change. Use open-ended questions, reflective listening, and affirmations. 
+    Focus on eliciting change talk and helping the user resolve ambivalence about change."""
 
-# ... (keep the existing functions: create_thread_if_not_exists, add_message_to_thread, run_assistant, analyze_sentiment, export_to_pdf)
-
-def display_chat_history():
-    for message in st.session_state.chat_history:
-        if message["role"] == "assistant":
-            with st.chat_message("assistant", avatar=AVATAR_HTML):
-                st.write(message["content"])
+    try:
+        if st.session_state.assistant_id:
+            assistant = client.beta.assistants.update(
+                assistant_id=st.session_state.assistant_id,
+                name=assistant_name,
+                instructions=instructions,
+                model=model,
+                tools=[{"type": "code_interpreter"}]
+            )
         else:
-            with st.chat_message("user"):
-                st.write(message["content"])
+            assistant = client.beta.assistants.create(
+                name=assistant_name,
+                instructions=instructions,
+                model=model,
+                tools=[{"type": "code_interpreter"}]
+            )
+        st.session_state.assistant_id = assistant.id
+        return assistant
+    except Exception as e:
+        st.error(f"Error creating/updating assistant: {str(e)}")
+        return None
 
-def get_initial_question():
-    questions = [
-        "So, what's next for you?",
-        "So, where do you go from here?",
-        "So, what do you think you will do?",
-        "So, what are you going to do?"
-    ]
-    return random.choice(questions)
+# ... (keep the existing functions: create_thread_if_not_exists, add_message_to_thread, analyze_sentiment, export_to_pdf, display_chat_history, get_initial_question)
+
+def run_assistant(instructions=None):
+    create_thread_if_not_exists()
+    try:
+        run = client.beta.threads.runs.create(
+            thread_id=st.session_state.thread_id,
+            assistant_id=st.session_state.assistant_id,
+            instructions=instructions
+        )
+        
+        while True:
+            run_status = client.beta.threads.runs.retrieve(
+                thread_id=st.session_state.thread_id,
+                run_id=run.id
+            )
+            if run_status.status == 'completed':
+                break
+            elif run_status.status == 'failed':
+                st.error(f"Run failed: {run_status.last_error}")
+                return None
+            time.sleep(1)
+        
+        messages = client.beta.threads.messages.list(
+            thread_id=st.session_state.thread_id
+        )
+        
+        assistant_message = messages.data[0].content[0].text.value
+        st.session_state.chat_history.append({"role": "assistant", "content": assistant_message})
+        return assistant_message
+    except Exception as e:
+        st.error(f"Error in run_assistant: {str(e)}")
+        return None
 
 def main():
     st.title("Motivational Interviewing Chatbot")
+
+    # Create or update the assistant
+    assistant = create_or_update_assistant()
+    if not assistant:
+        st.error("Failed to create or update the assistant. Please check your API key and try again.")
+        return
 
     # Create a layout with two columns
     col1, col2 = st.columns([1, 3])
