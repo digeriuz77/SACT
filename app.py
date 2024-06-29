@@ -58,9 +58,10 @@ st.markdown(f"""
     .assistant-message {{
         background-color: #F1F8E9;
     }}
-    .export-button {{
-        display: inline-block;
-        margin-left: 10px;
+    .export-button-container {{
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -196,18 +197,22 @@ def main():
             st.markdown(f'<div class="sentiment-box">Sentiment: {sentiment:.2f}</div>', unsafe_allow_html=True)
         
         st.markdown('<p class="metric-label">Confidence in ability to change:</p>', unsafe_allow_html=True)
-        st.slider("", 0, 10, key="confidence", on_change=on_confidence_change)
+        st.slider("Confidence", 0, 10, key="confidence", on_change=on_confidence_change)
         
         st.markdown('<p class="metric-label">Importance of change:</p>', unsafe_allow_html=True)
-        st.slider("", 0, 10, key="importance", on_change=on_importance_change)
+        st.slider("Importance", 0, 10, key="importance", on_change=on_importance_change)
         
         with st.container():
-            st.button("Export to PDF", key="export_button", on_click=lambda: st.download_button(
-                label="Download PDF",
-                data=export_to_pdf(),
-                file_name="conversation_summary.pdf",
-                mime="application/pdf"
-            ), class_="export-button")
+            st.markdown("<div class='export-button-container'>", unsafe_allow_html=True)
+            if st.button("Export to PDF", key="export_button"):
+                pdf = export_to_pdf()
+                st.download_button(
+                    label="Download PDF",
+                    data=pdf,
+                    file_name="conversation_summary.pdf",
+                    mime="application/pdf"
+                )
+            st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
         st.subheader("Chat")
