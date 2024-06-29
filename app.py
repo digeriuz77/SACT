@@ -9,7 +9,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-import random
 
 # Initialize NLTK
 nltk.download('vader_lexicon', quiet=True)
@@ -145,27 +144,22 @@ def main():
         st.subheader("Chat")
         
         for message in st.session_state.chat_history:
-            with st.chat_message(message["role"]):
-                st.write(message["content"])
+            st.text(f"{message['role'].capitalize()}: {message['content']}")
 
-        user_input = st.chat_input("Type your message here...")
-
-        if user_input:
-            st.session_state.chat_history.append({"role": "user", "content": user_input})
-            add_message_to_thread(user_input)
-            
-            with st.chat_message("user"):
-                st.write(user_input)
-            
-            with st.spinner("Thinking..."):
-                assistant_response = run_assistant()
-            
-            if assistant_response:
-                st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
-                with st.chat_message("assistant"):
-                    st.write(assistant_response)
-            else:
-                st.error("Failed to get a response from the assistant. Please try again.")
+        user_input = st.text_input("Type your message here...", key="user_input")
+        if st.button("Send"):
+            if user_input:
+                st.session_state.chat_history.append({"role": "user", "content": user_input})
+                add_message_to_thread(user_input)
+                
+                with st.spinner("Thinking..."):
+                    assistant_response = run_assistant()
+                
+                if assistant_response:
+                    st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+                    st.experimental_rerun()
+                else:
+                    st.error("Failed to get a response from the assistant. Please try again.")
 
 if __name__ == "__main__":
     main()
