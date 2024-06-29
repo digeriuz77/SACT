@@ -143,6 +143,19 @@ def on_importance_change():
     if assistant_response:
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
 
+def send_message():
+    user_input = st.session_state.user_input
+    if user_input:
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        add_message_to_thread(user_input)
+        
+        assistant_response = run_assistant()
+        
+        if assistant_response:
+            st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+        
+        st.session_state.user_input = ""  # Clear the input
+
 def main():
     st.title("Motivational Interviewing Chatbot")
 
@@ -180,20 +193,8 @@ def main():
                 </div>
             """, unsafe_allow_html=True)
 
-        user_input = st.text_input("Type your message here...", key="user_input", value=st.session_state.user_input)
-        if st.button("Send"):
-            if user_input:
-                st.session_state.chat_history.append({"role": "user", "content": user_input})
-                add_message_to_thread(user_input)
-                
-                with st.spinner("Thinking..."):
-                    assistant_response = run_assistant()
-                
-                if assistant_response:
-                    st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
-                
-                st.session_state.user_input = ""  # Clear the input
-                st.experimental_rerun()
+        st.text_input("Type your message here...", key="user_input")
+        st.button("Send", on_click=send_message)
 
 if __name__ == "__main__":
     main()
