@@ -9,6 +9,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+import random
 
 # Initialize NLTK
 nltk.download('vader_lexicon', quiet=True)
@@ -40,9 +41,25 @@ st.markdown(f"""
         border-radius: 5px;
         background-color: {SECONDARY_COLOR};
         color: white;
+        display: inline-block;
+    }}
+    .avatar {{
+        width: 50px;
+        height: 50px;
+        margin-right: 10px;
     }}
     </style>
 """, unsafe_allow_html=True)
+
+# 8-bit pixel avatar (you can replace this with an actual image URL)
+AVATAR_HTML = """
+<svg class="avatar" viewBox="0 0 100 100">
+    <rect x="0" y="0" width="100" height="100" fill="#FFD700"/>
+    <rect x="30" y="30" width="15" height="15" fill="#000000"/>
+    <rect x="55" y="30" width="15" height="15" fill="#000000"/>
+    <rect x="40" y="60" width="20" height="10" fill="#FF0000"/>
+</svg>
+"""
 
 # Initialize session state
 def init_session_state():
@@ -58,6 +75,8 @@ def init_session_state():
         st.session_state.confidence = 5
     if "importance" not in st.session_state:
         st.session_state.importance = 5
+    if "conversation_started" not in st.session_state:
+        st.session_state.conversation_started = False
 
 # Call the initialization function
 init_session_state()
@@ -71,150 +90,89 @@ client = OpenAI(
 # Assistant ID for DecisionBalanceandPlan
 ASSISTANT_ID = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"
 
-def create_thread_if_not_exists():
-    if not st.session_state.thread_id:
-        thread = client.beta.threads.create()
-        st.session_state.thread_id = thread.id
-
-def add_message_to_thread(content):
-    create_thread_if_not_exists()
-    message = client.beta.threads.messages.create(
-        thread_id=st.session_state.thread_id,
-        role="user",
-        content=content
-    )
-    return message
-
-def run_assistant(instructions=None):
-    create_thread_if_not_exists()
-    try:
-        run = client.beta.threads.runs.create(
-            thread_id=st.session_state.thread_id,
-            assistant_id=ASSISTANT_ID,
-            instructions=instructions
-        )
-        
-        while True:
-            try:
-                run_status = client.beta.threads.runs.retrieve(
-                    thread_id=st.session_state.thread_id,
-                    run_id=run.id
-                )
-                if run_status.status == 'completed':
-                    break
-                elif run_status.status == 'failed':
-                    st.error(f"Run failed: {run_status.last_error}")
-                    return None
-                time.sleep(1)
-            except Exception as e:
-                st.error(f"Error retrieving run status: {str(e)}")
-                return None
-        
-        try:
-            messages = client.beta.threads.messages.list(
-                thread_id=st.session_state.thread_id
-            )
-            
-            assistant_message = messages.data[0].content[0].text.value
-            st.session_state.chat_history.append({"role": "assistant", "content": assistant_message})
-            return assistant_message
-        except Exception as e:
-            st.error(f"Error retrieving messages: {str(e)}")
-            return None
-    except Exception as e:
-        st.error(f"Error creating run: {str(e)}")
-        return None
-
-def analyze_sentiment(text):
-    sia = SentimentIntensityAnalyzer()
-    return sia.polarity_scores(text)['compound']
-
-def export_to_pdf():
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    styles = getSampleStyleSheet()
-    flowables = []
-
-    for message in st.session_state.chat_history:
-        flowables.append(Paragraph(f"{message['role'].capitalize()}: {message['content']}", styles['Normal']))
-        flowables.append(Paragraph("<br/><br/>", styles['Normal']))
-
-    doc.build(flowables)
-    pdf = buffer.getvalue()
-    buffer.close()
-    return pdf
+# ... (keep the existing functions: create_thread_if_not_exists, add_message_to_thread, run_assistant, analyze_sentiment, export_to_pdf)
 
 def display_chat_history():
     for message in st.session_state.chat_history:
-        with st.chat_message(message["role"]):
-            st.write(message["content"])
+        if message["role"] == "assistant":
+            with st.chat_message("assistant", avatar=AVATAR_HTML):
+                st.write(message["content"])
+        else:
+            with st.chat_message("user"):
+                st.write(message["content"])
+
+def get_initial_question():
+    questions = [
+        "So, what's next for you?",
+        "So, where do you go from here?",
+        "So, what do you think you will do?",
+        "So, what are you going to do?"
+    ]
+    return random.choice(questions)
 
 def main():
     st.title("Motivational Interviewing Chatbot")
 
-    # Sentiment analysis in a small box at the top left
-    if st.session_state.chat_history:
-        all_text = " ".join([msg["content"] for msg in st.session_state.chat_history])
-        sentiment = analyze_sentiment(all_text)
-        st.markdown(f"""
-            <div class="sentiment-box">
-                Overall Sentiment: {sentiment:.2f}
-            </div>
-        """, unsafe_allow_html=True)
+    # Create a layout with two columns
+    col1, col2 = st.columns([1, 3])
 
-    # Main chat area
-    chat_container = st.container()
+    with col1:
+        st.subheader("Metrics")
+        
+        # Sentiment analysis in a small box
+        if st.session_state.chat_history:
+            all_text = " ".join([msg["content"] for msg in st.session_state.chat_history])
+            sentiment = analyze_sentiment(all_text)
+            st.markdown(f"""
+                <div class="sentiment-box">
+                    Overall Sentiment: {sentiment:.2f}
+                </div>
+            """, unsafe_allow_html=True)
+        
+        # Persistent sliders
+        st.write("How confident are you in your ability to make this change?")
+        st.session_state.confidence = st.slider("Confidence", 0, 10, st.session_state.confidence)
+        
+        st.write("How important is this change to you?")
+        st.session_state.importance = st.slider("Importance", 0, 10, st.session_state.importance)
+        
+        # Export to PDF button
+        if st.button("Export Conversation to PDF"):
+            pdf = export_to_pdf()
+            st.download_button(
+                label="Download PDF",
+                data=pdf,
+                file_name="conversation_summary.pdf",
+                mime="application/pdf"
+            )
 
-    # Contextual GUI elements
-    gui_container = st.container()
+    with col2:
+        # Main chat area
+        st.subheader("Chat")
+        chat_container = st.container()
 
-    with chat_container:
-        display_chat_history()
+        with chat_container:
+            display_chat_history()
 
-        # User input
-        user_input = st.chat_input("Type your message here...")
-
-        if user_input:
-            st.session_state.chat_history.append({"role": "user", "content": user_input})
-            add_message_to_thread(user_input)
-            assistant_response = run_assistant()
-            if assistant_response:
+            # Start the conversation if it hasn't started yet
+            if not st.session_state.conversation_started:
+                initial_message = "I'm here to help you make a change. " + get_initial_question()
+                st.session_state.chat_history.append({"role": "assistant", "content": initial_message})
+                add_message_to_thread(initial_message)
+                st.session_state.conversation_started = True
                 st.experimental_rerun()
-            else:
-                st.error("Failed to get a response from the assistant. Please try again.")
 
-    with gui_container:
-        if st.session_state.current_stage == "confidence_ruler":
-            st.write("How confident are you in your ability to make this change?")
-            st.session_state.confidence = st.slider("Confidence", 0, 10, 5)
-            if st.button("Continue"):
-                st.session_state.current_stage = "importance_ruler"
-                st.experimental_rerun()
+            # User input
+            user_input = st.chat_input("Type your message here...")
 
-        elif st.session_state.current_stage == "importance_ruler":
-            st.write("How important is this change to you?")
-            st.session_state.importance = st.slider("Importance", 0, 10, 5)
-            if st.button("Continue"):
-                st.session_state.current_stage = "main_conversation"
-                st.experimental_rerun()
-
-        elif st.session_state.current_stage == "main_conversation":
-            if st.button("Export Conversation to PDF"):
-                pdf = export_to_pdf()
-                st.download_button(
-                    label="Download PDF",
-                    data=pdf,
-                    file_name="conversation_summary.pdf",
-                    mime="application/pdf"
-                )
-
-    # Logic to change stages based on conversation
-    if len(st.session_state.chat_history) == 2:  # After first exchange
-        st.session_state.current_stage = "confidence_ruler"
-    elif len(st.session_state.chat_history) == 4:  # After second exchange
-        st.session_state.current_stage = "importance_ruler"
-    elif len(st.session_state.chat_history) > 4:
-        st.session_state.current_stage = "main_conversation"
+            if user_input:
+                st.session_state.chat_history.append({"role": "user", "content": user_input})
+                add_message_to_thread(user_input)
+                assistant_response = run_assistant()
+                if assistant_response:
+                    st.experimental_rerun()
+                else:
+                    st.error("Failed to get a response from the assistant. Please try again.")
 
 if __name__ == "__main__":
     main()
