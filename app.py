@@ -18,9 +18,9 @@ nltk.download('vader_lexicon', quiet=True)
 st.set_page_config(page_title="Motivational Interviewing Chatbot", layout="wide")
 
 # Custom color scheme
-PRIMARY_COLOR = "#4CAF50"  # Green
-SECONDARY_COLOR = "#2196F3"  # Blue
-BACKGROUND_COLOR = "#F1F8E9"  # Light green
+PRIMARY_COLOR = "#4CAF50"
+SECONDARY_COLOR = "#2196F3"
+BACKGROUND_COLOR = "#F1F8E9"
 
 # Custom CSS
 st.markdown(f"""
@@ -31,9 +31,6 @@ st.markdown(f"""
     .stButton>button {{
         color: white;
         background-color: {PRIMARY_COLOR};
-        border-radius: 20px;
-    }}
-    .stTextInput>div>div>input {{
         border-radius: 20px;
     }}
     .sentiment-box {{
@@ -56,14 +53,10 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "thread_id" not in st.session_state:
     st.session_state.thread_id = None
-if "user_id" not in st.session_state:
-    st.session_state.user_id = str(uuid.uuid4())
 if "confidence" not in st.session_state:
     st.session_state.confidence = 5
 if "importance" not in st.session_state:
     st.session_state.importance = 5
-if "conversation_started" not in st.session_state:
-    st.session_state.conversation_started = False
 
 # Initialize OpenAI client
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -98,6 +91,9 @@ def run_assistant():
         )
         if run_status.status == 'completed':
             break
+        elif run_status.status == 'failed':
+            st.error(f"Run failed: {run_status.last_error}")
+            return None
         time.sleep(1)
     
     messages = client.beta.threads.messages.list(
@@ -118,23 +114,10 @@ def export_to_pdf():
     doc.build(flowables)
     return buffer.getvalue()
 
-def display_chat_history():
-    for message in st.session_state.chat_history:
-        with st.chat_message(message["role"]):
-            st.write(message["content"])
-
-def get_initial_question():
-    return random.choice([
-        "So, what's next for you?",
-        "So, where do you go from here?",
-        "So, what do you think you will do?",
-        "So, what are you going to do?"
-    ])
-
 def main():
     st.title("Motivational Interviewing Chatbot")
 
-    col1, col2 = st.columns([1, 4])
+    col1, col2 = st.columns([1, 3])
 
     with col1:
         st.markdown("<h3 style='font-size: 18px;'>Metrics</h3>", unsafe_allow_html=True)
@@ -160,29 +143,29 @@ def main():
 
     with col2:
         st.subheader("Chat")
-        chat_container = st.container()
+        
+        for message in st.session_state.chat_history:
+            with st.chat_message(message["role"]):
+                st.write(message["content"])
 
-        with chat_container:
-            display_chat_history()
+        user_input = st.chat_input("Type your message here...")
 
-            if not st.session_state.conversation_started:
-                initial_message = f"I'm here to help you make a change. {get_initial_question()}"
-                st.session_state.chat_history.append({"role": "assistant", "content": initial_message})
-                add_message_to_thread(initial_message)
-                st.session_state.conversation_started = True
-                st.experimental_rerun()
-
-            user_input = st.chat_input("Type your message here...")
-
-            if user_input:
-                st.session_state.chat_history.append({"role": "user", "content": user_input})
-                add_message_to_thread(user_input)
+        if user_input:
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
+            add_message_to_thread(user_input)
+            
+            with st.chat_message("user"):
+                st.write(user_input)
+            
+            with st.spinner("Thinking..."):
                 assistant_response = run_assistant()
-                if assistant_response:
-                    st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
-                    st.experimental_rerun()
-                else:
-                    st.error("Failed to get a response from the assistant. Please try again.")
+            
+            if assistant_response:
+                st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+                with st.chat_message("assistant"):
+                    st.write(assistant_response)
+            else:
+                st.error("Failed to get a response from the assistant. Please try again.")
 
 if __name__ == "__main__":
     main()
