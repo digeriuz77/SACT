@@ -37,29 +37,19 @@ st.markdown(f"""
         border-radius: 20px;
     }}
     .sentiment-box {{
-        padding: 10px;
+        padding: 5px;
         border-radius: 5px;
         background-color: {SECONDARY_COLOR};
         color: white;
-        display: inline-block;
+        font-size: 14px;
+        margin-bottom: 10px;
     }}
-    .avatar {{
-        width: 50px;
-        height: 50px;
-        margin-right: 10px;
+    .metric-label {{
+        font-size: 12px;
+        color: #666;
     }}
     </style>
 """, unsafe_allow_html=True)
-
-# 8-bit pixel avatar
-AVATAR_HTML = """
-<svg class="avatar" viewBox="0 0 100 100">
-    <rect x="0" y="0" width="100" height="100" fill="#FFD700"/>
-    <rect x="30" y="30" width="15" height="15" fill="#000000"/>
-    <rect x="55" y="30" width="15" height="15" fill="#000000"/>
-    <rect x="40" y="60" width="20" height="10" fill="#FF0000"/>
-</svg>
-"""
 
 # Initialize session state
 if "chat_history" not in st.session_state:
@@ -130,7 +120,7 @@ def export_to_pdf():
 
 def display_chat_history():
     for message in st.session_state.chat_history:
-        with st.chat_message(message["role"], avatar=AVATAR_HTML if message["role"] == "assistant" else None):
+        with st.chat_message(message["role"]):
             st.write(message["content"])
 
 def get_initial_question():
@@ -144,22 +134,22 @@ def get_initial_question():
 def main():
     st.title("Motivational Interviewing Chatbot")
 
-    col1, col2 = st.columns([1, 3])
+    col1, col2 = st.columns([1, 4])
 
     with col1:
-        st.subheader("Metrics")
+        st.markdown("<h3 style='font-size: 18px;'>Metrics</h3>", unsafe_allow_html=True)
         
         if st.session_state.chat_history:
             sentiment = analyze_sentiment(" ".join(msg["content"] for msg in st.session_state.chat_history))
-            st.markdown(f'<div class="sentiment-box">Overall Sentiment: {sentiment:.2f}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sentiment-box">Sentiment: {sentiment:.2f}</div>', unsafe_allow_html=True)
         
-        st.write("How confident are you in your ability to make this change?")
-        st.session_state.confidence = st.slider("Confidence", 0, 10, st.session_state.confidence)
+        st.markdown('<p class="metric-label">Confidence in ability to change:</p>', unsafe_allow_html=True)
+        st.session_state.confidence = st.slider("", 0, 10, st.session_state.confidence, key="confidence_slider")
         
-        st.write("How important is this change to you?")
-        st.session_state.importance = st.slider("Importance", 0, 10, st.session_state.importance)
+        st.markdown('<p class="metric-label">Importance of change:</p>', unsafe_allow_html=True)
+        st.session_state.importance = st.slider("", 0, 10, st.session_state.importance, key="importance_slider")
         
-        if st.button("Export Conversation to PDF"):
+        if st.button("Export to PDF", key="export_button"):
             pdf = export_to_pdf()
             st.download_button(
                 label="Download PDF",
