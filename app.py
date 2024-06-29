@@ -36,6 +36,12 @@ st.markdown(f"""
     .stTextInput>div>div>input {{
         border-radius: 20px;
     }}
+    .sentiment-box {{
+        padding: 10px;
+        border-radius: 5px;
+        background-color: {SECONDARY_COLOR};
+        color: white;
+    }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -46,9 +52,15 @@ if "thread_id" not in st.session_state:
     st.session_state.thread_id = None
 if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
+if "current_stage" not in st.session_state:
+    st.session_state.current_stage = "introduction"
+if "confidence" not in st.session_state:
+    st.session_state.confidence = 5
+if "importance" not in st.session_state:
+    st.session_state.importance = 5
 
 # Initialize OpenAI client
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+client = OpenAI(api_key=st.secrets["openai"]["api_key"])
 
 # Assistant ID for DecisionBalanceandPlan
 ASSISTANT_ID = "asst_J7TcXqBWKeZdhdiS8YigHCik"
@@ -111,40 +123,74 @@ def export_to_pdf():
     buffer.close()
     return pdf
 
-def main():
-    st.title("Motivational Interviewing Chatbot")
-
-    # User input
-    user_input = st.text_input("You:", key="user_input")
-
-    if user_input:
-        # Add user message to chat history
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
-        
-        # Add message to thread and run assistant
-        add_message_to_thread(user_input)
-        assistant_response = run_assistant()
-
-    # Display chat history
+def display_chat_history():
     for message in st.session_state.chat_history:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    # Export chat to PDF
-    if st.button("Export Conversation to PDF"):
-        pdf = export_to_pdf()
-        st.download_button(
-            label="Download PDF",
-            data=pdf,
-            file_name="conversation_summary.pdf",
-            mime="application/pdf"
-        )
+def main():
+    st.title("Motivational Interviewing Chatbot")
 
-    # Display sentiment analysis
+    # Sentiment analysis in a small box at the top left
     if st.session_state.chat_history:
         all_text = " ".join([msg["content"] for msg in st.session_state.chat_history])
         sentiment = analyze_sentiment(all_text)
-        st.sidebar.markdown(f"**Overall Sentiment:** {sentiment:.2f}")
+        st.markdown(f"""
+            <div class="sentiment-box">
+                Overall Sentiment: {sentiment:.2f}
+            </div>
+        """, unsafe_allow_html=True)
+
+    # Main chat area
+    chat_container = st.container()
+
+    # Contextual GUI elements
+    gui_container = st.container()
+
+    with chat_container:
+        display_chat_history()
+
+        # User input
+        user_input = st.chat_input("Type your message here...")
+
+        if user_input:
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
+            add_message_to_thread(user_input)
+            assistant_response = run_assistant()
+            st.experimental_rerun()
+
+    with gui_container:
+        if st.session_state.current_stage == "confidence_ruler":
+            st.write("How confident are you in your ability to make this change?")
+            st.session_state.confidence = st.slider("Confidence", 0, 10, 5)
+            if st.button("Continue"):
+                st.session_state.current_stage = "importance_ruler"
+                st.experimental_rerun()
+
+        elif st.session_state.current_stage == "importance_ruler":
+            st.write("How important is this change to you?")
+            st.session_state.importance = st.slider("Importance", 0, 10, 5)
+            if st.button("Continue"):
+                st.session_state.current_stage = "main_conversation"
+                st.experimental_rerun()
+
+        elif st.session_state.current_stage == "main_conversation":
+            if st.button("Export Conversation to PDF"):
+                pdf = export_to_pdf()
+                st.download_button(
+                    label="Download PDF",
+                    data=pdf,
+                    file_name="conversation_summary.pdf",
+                    mime="application/pdf"
+                )
+
+    # Logic to change stages based on conversation
+    if len(st.session_state.chat_history) == 2:  # After first exchange
+        st.session_state.current_stage = "confidence_ruler"
+    elif len(st.session_state.chat_history) == 4:  # After second exchange
+        st.session_state.current_stage = "importance_ruler"
+    elif len(st.session_state.chat_history) > 4:
+        st.session_state.current_stage = "main_conversation"
 
 if __name__ == "__main__":
     main()
