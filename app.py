@@ -65,8 +65,6 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 # Updated Assistant ID
 ASSISTANT_ID = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"
 
-# Rest of the code remains the same...
-
 def create_thread_if_not_exists():
     if not st.session_state.thread_id:
         thread = client.beta.threads.create()
@@ -106,7 +104,29 @@ def run_assistant(instructions=None):
     st.session_state.chat_history.append({"role": "assistant", "content": assistant_message})
     return assistant_message
 
-# The rest of the functions (analyze_sentiment, export_to_pdf, display_chat_history) remain the same
+def analyze_sentiment(text):
+    sia = SentimentIntensityAnalyzer()
+    return sia.polarity_scores(text)['compound']
+
+def export_to_pdf():
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    flowables = []
+
+    for message in st.session_state.chat_history:
+        flowables.append(Paragraph(f"{message['role'].capitalize()}: {message['content']}", styles['Normal']))
+        flowables.append(Paragraph("<br/><br/>", styles['Normal']))
+
+    doc.build(flowables)
+    pdf = buffer.getvalue()
+    buffer.close()
+    return pdf
+
+def display_chat_history():
+    for message in st.session_state.chat_history:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
 
 def main():
     st.title("Motivational Interviewing Chatbot")
