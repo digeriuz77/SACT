@@ -62,8 +62,11 @@ def init_session_state():
 # Call the initialization function
 init_session_state()
 
-# Initialize OpenAI client
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# Initialize OpenAI client with v2 beta header
+client = OpenAI(
+    api_key=st.secrets["OPENAI_API_KEY"],
+    default_headers={"OpenAI-Beta": "assistants=v2"}
+)
 
 # Assistant ID for DecisionBalanceandPlan
 ASSISTANT_ID = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"
