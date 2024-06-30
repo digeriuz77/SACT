@@ -56,10 +56,10 @@ st.markdown(f"""
         word-break: break-word;
     }}
     .user-message {{
-        background-color: #E3F2FD;
+        background-color: #5e6ad8;
     }}
     .assistant-message {{
-        background-color: #F1F8E9;
+        background-color: #d8665e;
     }}
     </style>
 """, unsafe_allow_html=True)
