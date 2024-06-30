@@ -185,7 +185,7 @@ def rate_readiness():
 def summarize_conversation():
     st.session_state.current_assistant_id = "asst_2IN1dkowoziRpYyzSdgJbPZY"
     assistant_response = run_assistant()
-    if assistant_response:
+    if (assistant_response):
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
     st.session_state.current_assistant_id = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"  # Reset to main assistant
     st.session_state.show_summary_options = False
@@ -222,21 +222,14 @@ def main():
             
             if message['role'] == 'assistant':
                 if check_for_importance_slider(message['content']) and not st.session_state.importance_value_provided:
-                    importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key=f"importance_{i}")
-                    if importance != st.session_state.importance:
-                        st.session_state.importance = importance
-                        st.session_state.importance_value_provided = True
-                        on_slider_change("importance")
-                        st.experimental_rerun()
+                    st.session_state.show_importance_slider = True
                 elif check_for_confidence_slider(message['content']) and not st.session_state.confidence_value_provided:
-                    confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key=f"confidence_{i}")
-                    if confidence != st.session_state.confidence:
-                        st.session_state.confidence = confidence
-                        st.session_state.confidence_value_provided = True
-                        on_slider_change("confidence")
-                        st.experimental_rerun()
-                
-                if check_for_exit_condition(message['content']):
+                    st.session_state.show_confidence_slider = True
+                elif check_for_summary_condition(message['content']):
+                    st.session_state.show_summary_options = True
+                elif check_for_readiness_review(message['content']):
+                    st.session_state.show_readiness_button = True
+                elif check_for_exit_condition(message['content']):
                     pdf = export_to_pdf()
                     st.download_button(
                         label="Export Chat to PDF",
@@ -244,6 +237,24 @@ def main():
                         file_name="conversation_summary.pdf",
                         mime="application/pdf"
                     )
+
+        if st.session_state.show_importance_slider:
+            importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key="importance_slider")
+            if importance != st.session_state.importance:
+                st.session_state.importance = importance
+                st.session_state.importance_value_provided = True
+                st.session_state.show_importance_slider = False
+                on_slider_change("importance")
+                st.experimental_rerun()
+
+        if st.session_state.show_confidence_slider:
+            confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key="confidence_slider")
+            if confidence != st.session_state.confidence:
+                st.session_state.confidence = confidence
+                st.session_state.confidence_value_provided = True
+                st.session_state.show_confidence_slider = False
+                on_slider_change("confidence")
+                st.experimental_rerun()
 
         if st.session_state.show_summary_options:
             col1, col2 = st.columns(2)
