@@ -59,7 +59,7 @@ st.markdown(f"""
         background-color: #5e6ad8;
     }}
     .assistant-message {{
-        background-color: #d8665e;
+        background-color: #23082c;
     }}
     </style>
 """, unsafe_allow_html=True)
