@@ -255,23 +255,32 @@ def main():
     st.markdown(
         """
         <style>
-        .stSlider label {
-            font-size: 23px; /* Increase the font size */
-            color: white; /* Change label color to white */
+        /* Customize the slider container */
+        div.stSlider > div[data-baseweb="slider"] > div {
+            background: rgb(1 1 1 / 0%);
         }
-        .stSlider .st-ae .st-ce .st-de .st-ee .st-fe {
-            color: white; /* Change slider text color to white */
+
+        /* Customize the slider cursor */
+        div.stSlider > div[data-baseweb="slider"] > div > div > div[role="slider"] {
+            background-color: rgb(255, 0, 0); /* Red dot */
+            box-shadow: rgb(255 0 0 / 20%) 0px 0px 0px 0.2rem;
         }
-        .stSlider .st-bt {
-            background: white; /* Change slider background color to white */
+
+        /* Customize the slider numbers */
+        div.stSlider > div[data-baseweb="slider"] > div > div > div > div {
+            color: rgb(255, 255, 255); /* White numbers */
         }
-        .stSlider .st-ft .st-gt {
-            background: red; /* Change slider handle color to red */
+
+        /* Increase the font size of the slider label */
+        div.stSlider label {
+            font-size: 18px;
+            color: white;
         }
         </style>
         """,
         unsafe_allow_html=True,
     )
+
     col1, col2 = st.columns([1, 3])
 
     with col1:
