@@ -26,8 +26,10 @@ if "confidence" not in st.session_state:
     st.session_state.confidence = 5
 if "importance" not in st.session_state:
     st.session_state.importance = 5
-if "show_slider" not in st.session_state:
-    st.session_state.show_slider = False
+if "show_importance_slider" not in st.session_state:
+    st.session_state.show_importance_slider = False
+if "show_confidence_slider" not in st.session_state:
+    st.session_state.show_confidence_slider = False
 if "show_summary_options" not in st.session_state:
     st.session_state.show_summary_options = False
 if "show_readiness_button" not in st.session_state:
@@ -135,8 +137,11 @@ def export_to_pdf():
     doc.build(flowables)
     return buffer.getvalue()
 
-def check_for_slider_condition(text):
-    return "0-10" in text or "importance of change" in text.lower() or "confidence in change" in text.lower()
+def check_for_importance_slider(text):
+    return "importance of change" in text.lower()
+
+def check_for_confidence_slider(text):
+    return "confidence in your ability to change" in text.lower()
 
 def check_for_summary_condition(text):
     return "Would you like a summary of our conversation?" in text
@@ -156,6 +161,7 @@ def on_confidence_change():
         assistant_response = run_assistant()
     if assistant_response:
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+    st.session_state.show_confidence_slider = False
     st.experimental_rerun()
 
 def on_importance_change():
@@ -167,6 +173,7 @@ def on_importance_change():
         assistant_response = run_assistant()
     if assistant_response:
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+    st.session_state.show_importance_slider = False
     st.experimental_rerun()
 
 def rate_readiness():
@@ -210,43 +217,52 @@ def main():
     with col2:
         st.subheader("Chat")
         
-        if st.session_state.chat_history:
-            for message in st.session_state.chat_history:
-                st.markdown(f"""
-                    <div class="chat-message {'user-message' if message['role'] == 'user' else 'assistant-message'}">
-                        <b>{message['role'].capitalize()}:</b> {message['content']}
-                    </div>
-                """, unsafe_allow_html=True)
+        for message in st.session_state.chat_history:
+            st.markdown(f"""
+                <div class="chat-message {'user-message' if message['role'] == 'user' else 'assistant-message'}">
+                    <b>{message['role'].capitalize()}:</b> {message['content']}
+                </div>
+            """, unsafe_allow_html=True)
+            
+            if message['role'] == 'assistant':
+                # Check for importance slider
+                if check_for_importance_slider(message['content']):
+                    st.session_state.show_importance_slider = True
                 
-                # Display sliders after assistant messages if conditions are met
-                if message['role'] == 'assistant' and st.session_state.show_slider:
-                    confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key=f"confidence_{len(st.session_state.chat_history)}")
+                # Check for confidence slider
+                if check_for_confidence_slider(message['content']):
+                    st.session_state.show_confidence_slider = True
+                
+                # Display importance slider if prompted
+                if st.session_state.show_importance_slider:
                     importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key=f"importance_{len(st.session_state.chat_history)}")
-                    
-                    if confidence != st.session_state.confidence:
-                        st.session_state.confidence = confidence
-                        on_confidence_change()
-                    
                     if importance != st.session_state.importance:
                         st.session_state.importance = importance
                         on_importance_change()
                 
-                # Display Export PDF button if exit condition is met
-                if message['role'] == 'assistant' and check_for_exit_condition(message['content']):
-                    pdf = export_to_pdf()
-                    st.download_button(
-                        label="Export Chat to PDF",
-                        data=pdf,
-                        file_name="conversation_summary.pdf",
-                        mime="application/pdf"
-                    )
+                # Display confidence slider if prompted
+                if st.session_state.show_confidence_slider:
+                    confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key=f"confidence_{len(st.session_state.chat_history)}")
+                    if confidence != st.session_state.confidence:
+                        st.session_state.confidence = confidence
+                        on_confidence_change()
+            
+            # Display Export PDF button if exit condition is met
+            if message['role'] == 'assistant' and check_for_exit_condition(message['content']):
+                pdf = export_to_pdf()
+                st.download_button(
+                    label="Export Chat to PDF",
+                    data=pdf,
+                    file_name="conversation_summary.pdf",
+                    mime="application/pdf"
+                )
 
-            if st.session_state.show_summary_options:
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.button("Please summarize", on_click=summarize_conversation)
-                with col2:
-                    st.button("No, continue", on_click=continue_conversation)
+        if st.session_state.show_summary_options:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.button("Please summarize", on_click=summarize_conversation)
+            with col2:
+                st.button("No, continue", on_click=continue_conversation)
 
         user_input = st.chat_input("Type your message here...")
         
@@ -259,7 +275,6 @@ def main():
             
             if assistant_response:
                 st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
-                st.session_state.show_slider = check_for_slider_condition(assistant_response)
                 st.session_state.show_summary_options = check_for_summary_condition(assistant_response)
                 st.session_state.show_readiness_button = check_for_readiness_review(assistant_response)
             
