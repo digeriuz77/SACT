@@ -69,9 +69,9 @@ st.markdown(f"""
         margin-bottom: 16px;
     }}
     .chat-message {{
-        padding: 10px;
-        border-radius: 9px;
-        margin-bottom: 10px;
+        padding: 18px;
+        border-radius: 12px;
+        margin-bottom: 12px;
         word-wrap: break-word;
         white-space: pre-wrap;
         word-break: break-word;
@@ -80,7 +80,7 @@ st.markdown(f"""
         background-color: #5e6ad8;
     }}
     .assistant-message {{
-        background-color: #23082c;
+        background-color: #150426;
     }}
     .scrollable-container {{
         max-height: 600px;
