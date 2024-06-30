@@ -293,7 +293,7 @@ def main():
             if message['role'] == 'assistant':
                 st.markdown(f"""
                     <div class="chat-message assistant-message">
-                        <b>Coach:</b> {message['content']}
+                        🐙 {message['content']}
                     </div>
                 """, unsafe_allow_html=True)
             else:
