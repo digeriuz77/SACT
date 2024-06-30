@@ -213,23 +213,22 @@ def main():
             sentiment = analyze_sentiment(" ".join(msg["content"] for msg in st.session_state.chat_history))
             st.markdown(f'<div class="sentiment-box">Sentiment: {sentiment:.2f}</div>', unsafe_allow_html=True)
         
-        # Show the "Rate my readiness to change" button only when prompted
         if st.session_state.show_readiness_button:
             st.button("Rate my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
 
     with col2:
-    st.subheader("Chat")
-    st.write(f"Show importance slider: {st.session_state.show_importance_slider}")
-    st.write(f"Show confidence slider: {st.session_state.show_confidence_slider}")
-    st.write(f"Importance value provided: {st.session_state.get('importance_value_provided', False)}")
-    st.write(f"Confidence value provided: {st.session_state.get('confidence_value_provided', False)}")
+        st.subheader("Chat")
+        st.write(f"Show importance slider: {st.session_state.show_importance_slider}")
+        st.write(f"Show confidence slider: {st.session_state.show_confidence_slider}")
+        st.write(f"Importance value provided: {st.session_state.get('importance_value_provided', False)}")
+        st.write(f"Confidence value provided: {st.session_state.get('confidence_value_provided', False)}")
         
-    for i, message in enumerate(st.session_state.chat_history):
-        st.markdown(f"""
-            <div class="chat-message {'user-message' if message['role'] == 'user' else 'assistant-message'}">
-                <b>{message['role'].capitalize()}:</b> {message['content']}
-            </div>
-        """, unsafe_allow_html=True)
+        for i, message in enumerate(st.session_state.chat_history):
+            st.markdown(f"""
+                <div class="chat-message {'user-message' if message['role'] == 'user' else 'assistant-message'}">
+                    <b>{message['role'].capitalize()}:</b> {message['content']}
+                </div>
+            """, unsafe_allow_html=True)
             
             if message['role'] == 'assistant':
                 if check_for_importance_slider(message['content']):
@@ -248,7 +247,6 @@ def main():
                         mime="application/pdf"
                     )
             
-            # Display sliders after the corresponding message
             if st.session_state.show_importance_slider and not st.session_state.get('importance_value_provided', False):
                 importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key=f"importance_{i}")
                 if importance != st.session_state.importance:
@@ -264,8 +262,6 @@ def main():
                     st.session_state.confidence_value_provided = True
                     on_slider_change("confidence")
                     st.experimental_rerun()
-
-
 
         if st.session_state.show_summary_options:
             col1, col2 = st.columns(2)
