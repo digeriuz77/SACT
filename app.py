@@ -91,6 +91,14 @@ st.markdown(f"""
         max-height: 600px;
         overflow-y: auto;
     }}
+    /* Custom styling for chat input */
+    .stTextInput input {{
+        color: white; /* Change text color */
+        background-color: {PRIMARY_COLOR}; /* Change background color */
+        border-radius: 20px; /* Rounded corners */
+        padding: 10px; /* Add padding */
+        font-size: 18px; /* Adjust font size */
+    }}
     </style>
 """, unsafe_allow_html=True)
 
