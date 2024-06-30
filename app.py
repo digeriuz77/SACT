@@ -26,6 +26,10 @@ if "confidence" not in st.session_state:
     st.session_state.confidence = 5
 if "importance" not in st.session_state:
     st.session_state.importance = 5
+if "importance_value_provided" not in st.session_state:
+    st.session_state.importance_value_provided = False
+if "confidence_value_provided" not in st.session_state:
+    st.session_state.confidence_value_provided = False
 if "show_importance_slider" not in st.session_state:
     st.session_state.show_importance_slider = False
 if "show_confidence_slider" not in st.session_state:
@@ -156,9 +160,11 @@ def on_slider_change(slider_type):
     if slider_type == "importance":
         value = st.session_state.importance
         message = f"The importance of this change to me is {value} out of 10."
+        st.session_state.importance_value_provided = True
     else:  # confidence
         value = st.session_state.confidence
         message = f"My confidence in my ability to change is {value} out of 10."
+        st.session_state.confidence_value_provided = True
     
     st.session_state.chat_history.append({"role": "user", "content": message})
     add_message_to_thread(message)
@@ -168,10 +174,8 @@ def on_slider_change(slider_type):
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
     
     # Reset slider visibility
-    if slider_type == "importance":
-        st.session_state.show_importance_slider = False
-    else:
-        st.session_state.show_confidence_slider = False
+    st.session_state.show_importance_slider = False
+    st.session_state.show_confidence_slider = False
     
     st.experimental_rerun()
 
@@ -213,6 +217,9 @@ def main():
         if st.session_state.show_readiness_button:
             st.button("Rate my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
 
+def main():
+    # ... [previous part of the main function remains the same]
+
     with col2:
         st.subheader("Chat")
         
@@ -224,9 +231,9 @@ def main():
             """, unsafe_allow_html=True)
             
             if message['role'] == 'assistant':
-                if check_for_importance_slider(message['content']):
+                if check_for_importance_slider(message['content']) and not st.session_state.get('importance_value_provided', False):
                     st.session_state.show_importance_slider = True
-                elif check_for_confidence_slider(message['content']):
+                elif check_for_confidence_slider(message['content']) and not st.session_state.get('confidence_value_provided', False):
                     st.session_state.show_confidence_slider = True
                 
                 if check_for_exit_condition(message['content']):
@@ -239,19 +246,22 @@ def main():
                     )
             
             # Display sliders after the corresponding message
-            if st.session_state.show_importance_slider:
+            if st.session_state.show_importance_slider and not st.session_state.get('importance_value_provided', False):
                 importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key=f"importance_{i}")
                 if importance != st.session_state.importance:
                     st.session_state.importance = importance
+                    st.session_state.importance_value_provided = True
                     on_slider_change("importance")
                     break  # Break the loop to trigger a rerun
             
-            if st.session_state.show_confidence_slider:
+            if st.session_state.show_confidence_slider and not st.session_state.get('confidence_value_provided', False):
                 confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key=f"confidence_{i}")
                 if confidence != st.session_state.confidence:
                     st.session_state.confidence = confidence
+                    st.session_state.confidence_value_provided = True
                     on_slider_change("confidence")
                     break  # Break the loop to trigger a rerun
+
 
         if st.session_state.show_summary_options:
             col1, col2 = st.columns(2)
