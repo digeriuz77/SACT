@@ -195,8 +195,8 @@ def main():
         st.button("Rate my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
         
         if st.session_state.show_slider:
-            st.slider("Confidence in ability to change:", 0, 10, key="confidence")
-            st.slider("Importance of change:", 0, 10, key="importance")
+            st.slider("Confidence in ability to change:", 0, 10, key="confidence", on_change=on_confidence_change)
+            st.slider("Importance of change:", 0, 10, key="importance", on_change=on_importance_change)
         
         if st.button("Export to PDF", key="export_button"):
             pdf = export_to_pdf()
