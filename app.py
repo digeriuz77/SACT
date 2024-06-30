@@ -77,7 +77,7 @@ st.markdown(f"""
         word-break: break-word;
     }}
     .user-message {{
-        background-color: #5e6ad8;
+        background-color: #000000;
     }}
     .assistant-message {{
         background-color: #150426;
