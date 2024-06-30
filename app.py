@@ -217,9 +217,6 @@ def main():
         if st.session_state.show_readiness_button:
             st.button("Rate my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
 
-def main():
-    # ... [previous part of the main function remains the same]
-
     with col2:
         st.subheader("Chat")
         
