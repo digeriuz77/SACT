@@ -251,7 +251,27 @@ welcome_messages = [
 
 def main():
     st.title("Motivational Interviewing Chatbot")
-
+# Custom CSS for slider
+    st.markdown(
+        """
+        <style>
+        .stSlider label {
+            font-size: 23px; /* Increase the font size */
+            color: white; /* Change label color to white */
+        }
+        .stSlider .st-ae .st-ce .st-de .st-ee .st-fe {
+            color: white; /* Change slider text color to white */
+        }
+        .stSlider .st-bt {
+            background: white; /* Change slider background color to white */
+        }
+        .stSlider .st-ft .st-gt {
+            background: red; /* Change slider handle color to red */
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     col1, col2 = st.columns([1, 3])
 
     with col1:
