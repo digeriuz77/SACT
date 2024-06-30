@@ -283,6 +283,8 @@ def main():
     with col2:
         st.subheader("Chat")
 
+        slider_container = st.empty()
+
         # Display a random welcome message if chat history is empty
         if not st.session_state.welcome_message_displayed:
             welcome_message = random.choice(welcome_messages)
@@ -314,20 +316,25 @@ def main():
                     st.session_state.show_confidence_slider = True
 
         if st.session_state.show_importance_slider:
-            importance = st.slider("On a scale of 0-10, how important is this change to you?", 0, 10, st.session_state.importance, key="importance_slider")
-            if importance != st.session_state.importance:
-                st.session_state.importance = importance
-                st.session_state.importance_value_provided = True
-                st.session_state.show_importance_slider = False
-                on_slider_change("importance")
+            with slider_container:
+                importance = st.slider("On a scale of 0-10, how important is this change to you?", 0, 10, st.session_state.importance, key="importance_slider")
+                if importance != st.session_state.importance:
+                    st.session_state.importance = importance
+                    st.session_state.importance_value_provided = True
+                    st.session_state.show_importance_slider = False
+                    on_slider_change("importance")
 
         if st.session_state.show_confidence_slider:
-            confidence = st.slider("On a scale of 0-10, how confident are you in making this change?", 0, 10, st.session_state.confidence, key="confidence_slider")
-            if confidence != st.session_state.confidence:
-                st.session_state.confidence = confidence
-                st.session_state.confidence_value_provided = True
-                st.session_state.show_confidence_slider = False
-                on_slider_change("confidence")
+            with slider_container:
+                confidence = st.slider("On a scale of 0-10, how confident are you in making this change?", 0, 10, st.session_state.confidence, key="confidence_slider")
+                if confidence != st.session_state.confidence:
+                    st.session_state.confidence = confidence
+                    st.session_state.confidence_value_provided = True
+                    st.session_state.show_confidence_slider = False
+                    on_slider_change("confidence")
+                    
+        if not st.session_state.show_importance_slider and not st.session_state.show_confidence_slider:
+            slider_container.empty()
 
         if st.session_state.show_readiness_button:
             st.button("Review my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
