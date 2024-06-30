@@ -248,13 +248,28 @@ def main():
             sentiment = analyze_sentiment(" ".join(msg["content"] for msg in st.session_state["chat_history"]))
             st.markdown(f'<div class="sentiment-box">Sentiment: {sentiment:.2f}</div>', unsafe_allow_html=True)
 
-        st.button("Start Over", on_click=reset_chat, key="start_over")
-        st.button("Save Chat", on_click=save_chat, key="save_chat")
-        
-        saved_chats = get_saved_chats()
-        selected_chat = st.selectbox("Load Chat", [""] + saved_chats, key="load_chat")
-        if selected_chat:
-            load_chat(selected_chat)
+        # Buttons row
+        button_col1, button_col2, button_col3, button_col4 = st.columns(4)
+        with button_col1:
+            st.markdown('<div style="text-align: center; margin-bottom: 10px;">', unsafe_allow_html=True)
+            st.button("Start Over", on_click=reset_chat, key="start_over", help="Start Over", 
+                      use_container_width=True, css={"background-color": "#a1a53b"})
+            st.markdown('</div>', unsafe_allow_html=True)
+        with button_col2:
+            st.markdown('<div style="text-align: center; margin-bottom: 10px;">', unsafe_allow_html=True)
+            st.button("Save Chat", on_click=save_chat, key="save_chat", help="Save Chat", 
+                      use_container_width=True, css={"background-color": "#3f3ba5"})
+            st.markdown('</div>', unsafe_allow_html=True)
+        with button_col3:
+            st.markdown('<div style="text-align: center; margin-bottom: 10px;">', unsafe_allow_html=True)
+            st.button("Summarize", on_click=summarize_conversation, key="summarize", help="Summarize", 
+                      use_container_width=True, css={"background-color": "#a53b6c"})
+            st.markdown('</div>', unsafe_allow_html=True)
+        with button_col4:
+            st.markdown('<div style="text-align: center; margin-bottom: 10px;">', unsafe_allow_html=True)
+            st.button("Review Readiness", on_click=rate_readiness, key="rate_readiness", help="Review Readiness", 
+                      use_container_width=True, css={"background-color": "#a53b3b"})
+            st.markdown('</div>', unsafe_allow_html=True)
 
         # Sliders
         importance = st.slider("On a scale of 0-10, how important is this change to you?", 0, 10, st.session_state.get("importance", 5), key="importance_slider")
@@ -267,15 +282,6 @@ def main():
         if confidence != st.session_state.get("confidence"):
             st.session_state["confidence"] = confidence
             on_slider_change("confidence")
-
-        st.button("Review my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
-
-        # Buttons for summarizing or continuing the conversation
-        col1_inner, col2_inner = st.columns(2)
-        with col1_inner:
-            st.button("Summarize our conversation", on_click=summarize_conversation)
-        with col2_inner:
-            st.button("Continue our conversation", on_click=continue_conversation)
 
 if __name__ == "__main__":
     main()
