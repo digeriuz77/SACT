@@ -10,6 +10,13 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 import re
+import random
+
+welcome_messages = [
+    "Hi, I'm a coachbot that helps you make changes. What change is next for you?",
+    "Welcome, I'm a coachbot that helps you make changes. What change would you like to make?",
+    "Hi there! I'm a coachbot that aids in decision making. What are you planning to change?"
+]
 
 # Initialize NLTK
 nltk.download('vader_lexicon', quiet=True)
@@ -213,6 +220,11 @@ def main():
     with col2:
         st.subheader("Chat")
         
+        # Display a random welcome message if chat history is empty
+        if not st.session_state.chat_history:
+            welcome_message = random.choice(welcome_messages)
+            st.session_state.chat_history.append({"role": "assistant", "content": welcome_message})
+
         for i, message in enumerate(st.session_state.chat_history):
             st.markdown(f"""
                 <div class="chat-message {'user-message' if message['role'] == 'user' else 'assistant-message'}">
