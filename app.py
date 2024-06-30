@@ -7,6 +7,10 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 from io import BytesIO
 import re
 import random
+import logging
+
+# Initialize logging
+logging.basicConfig(level=logging.DEBUG)
 
 # Initialize NLTK
 nltk.download('vader_lexicon', quiet=True)
@@ -153,10 +157,10 @@ def check_for_summary_condition(text):
     return "Would you like a summary of our conversation?" in text
 
 def check_for_readiness_review(text):
-    return "review your readiness to change" in text
+    return "review your readiness to change" in text.lower()
 
 def check_for_exit_condition(text):
-    return "exit the chat" in text
+    return "exit the chat" in text.lower()
 
 def on_slider_change(slider_type):
     if slider_type == "importance":
@@ -216,6 +220,22 @@ def display_sliders():
             on_slider_change("confidence")
             st.experimental_rerun()
 
+def process_messages():
+    for i, message in enumerate(st.session_state.chat_history):
+        st.markdown(f"""
+            <div class="chat-message {'user-message' if message['role'] == 'user' else 'assistant-message'}">
+                <b>{message['role'].capitalize()}:</b> {message['content']}
+            </div>
+        """, unsafe_allow_html=True)
+        
+        if message['role'] == 'assistant':
+            if check_for_importance_slider(message['content']) and not st.session_state.importance_value_provided:
+                st.session_state.show_importance_slider = True
+                logging.debug("Set show_importance_slider to True")
+            elif check_for_confidence_slider(message['content']) and not st.session_state.confidence_value_provided:
+                st.session_state.show_confidence_slider = True
+                logging.debug("Set show_confidence_slider to True")
+
 welcome_messages = [
     "Hi, I'm a coachbot that helps you make changes. What change is next for you?",
     "Welcome, I'm a coachbot that helps you make changes. What change would you like to make?",
@@ -246,30 +266,7 @@ def main():
             st.session_state.chat_history.append({"role": "assistant", "content": welcome_message})
             st.session_state.welcome_message_displayed = True
         
-        for i, message in enumerate(st.session_state.chat_history):
-            st.markdown(f"""
-                <div class="chat-message {'user-message' if message['role'] == 'user' else 'assistant-message'}">
-                    <b>{message['role'].capitalize()}:</b> {message['content']}
-                </div>
-            """, unsafe_allow_html=True)
-            
-            if message['role'] == 'assistant':
-                if check_for_importance_slider(message['content']) and not st.session_state.importance_value_provided:
-                    st.session_state.show_importance_slider = True
-                elif check_for_confidence_slider(message['content']) and not st.session_state.confidence_value_provided:
-                    st.session_state.show_confidence_slider = True
-                elif check_for_summary_condition(message['content']):
-                    st.session_state.show_summary_options = True
-                elif check_for_readiness_review(message['content']):
-                    st.session_state.show_readiness_button = True
-                elif check_for_exit_condition(message['content']):
-                    pdf = export_to_pdf()
-                    st.download_button(
-                        label="Export Chat to PDF",
-                        data=pdf,
-                        file_name="conversation_summary.pdf",
-                        mime="application/pdf"
-                    )
+        process_messages()
 
         # Call the function to display sliders
         display_sliders()
