@@ -12,12 +12,6 @@ from io import BytesIO
 import re
 import random
 
-welcome_messages = [
-    "Hi, I'm a coachbot that helps you make changes. What change is next for you?",
-    "Welcome, I'm a coachbot that helps you make changes. What change would you like to make?",
-    "Hi there! I'm a coachbot that aids in decision making. What are you planning to change?"
-]
-
 # Initialize NLTK
 nltk.download('vader_lexicon', quiet=True)
 
@@ -25,28 +19,33 @@ nltk.download('vader_lexicon', quiet=True)
 st.set_page_config(page_title="Motivational Interviewing Chatbot", layout="wide")
 
 # Initialize session state
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "thread_id" not in st.session_state:
-    st.session_state.thread_id = None
-if "confidence" not in st.session_state:
-    st.session_state.confidence = 5
-if "importance" not in st.session_state:
-    st.session_state.importance = 5
-if "importance_value_provided" not in st.session_state:
-    st.session_state.importance_value_provided = False
-if "confidence_value_provided" not in st.session_state:
-    st.session_state.confidence_value_provided = False
-if "show_importance_slider" not in st.session_state:
-    st.session_state.show_importance_slider = False
-if "show_confidence_slider" not in st.session_state:
-    st.session_state.show_confidence_slider = False
-if "show_summary_options" not in st.session_state:
-    st.session_state.show_summary_options = False
-if "show_readiness_button" not in st.session_state:
-    st.session_state.show_readiness_button = False
-if "current_assistant_id" not in st.session_state:
-    st.session_state.current_assistant_id = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"
+def initialize_session_state():
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+    if "thread_id" not in st.session_state:
+        st.session_state.thread_id = None
+    if "confidence" not in st.session_state:
+        st.session_state.confidence = 5
+    if "importance" not in st.session_state:
+        st.session_state.importance = 5
+    if "importance_value_provided" not in st.session_state:
+        st.session_state.importance_value_provided = False
+    if "confidence_value_provided" not in st.session_state:
+        st.session_state.confidence_value_provided = False
+    if "show_importance_slider" not in st.session_state:
+        st.session_state.show_importance_slider = False
+    if "show_confidence_slider" not in st.session_state:
+        st.session_state.show_confidence_slider = False
+    if "show_summary_options" not in st.session_state:
+        st.session_state.show_summary_options = False
+    if "show_readiness_button" not in st.session_state:
+        st.session_state.show_readiness_button = False
+    if "current_assistant_id" not in st.session_state:
+        st.session_state.current_assistant_id = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"
+    if "welcome_message_displayed" not in st.session_state:
+        st.session_state.welcome_message_displayed = False
+
+initialize_session_state()
 
 # Custom color scheme
 PRIMARY_COLOR = "#d85ea7"
@@ -202,13 +201,24 @@ def continue_conversation():
     st.session_state.show_summary_options = False
     st.experimental_rerun()
 
-import random
+def display_sliders():
+    if st.session_state.show_importance_slider:
+        importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key="importance_slider")
+        if importance != st.session_state.importance:
+            st.session_state.importance = importance
+            st.session_state.importance_value_provided = True
+            st.session_state.show_importance_slider = False
+            on_slider_change("importance")
+            st.experimental_rerun()
 
-welcome_messages = [
-    "Hi, I'm a coachbot that helps you make changes. What change is next for you?",
-    "Welcome, I'm a coachbot that helps you make changes. What change would you like to make?",
-    "Hi there! I'm a coachbot that aids in decision making. What are you planning to change?"
-]
+    if st.session_state.show_confidence_slider:
+        confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key="confidence_slider")
+        if confidence != st.session_state.confidence:
+            st.session_state.confidence = confidence
+            st.session_state.confidence_value_provided = True
+            st.session_state.show_confidence_slider = False
+            on_slider_change("confidence")
+            st.experimental_rerun()
 
 def main():
     st.title("Motivational Interviewing Chatbot")
@@ -229,9 +239,10 @@ def main():
         st.subheader("Chat")
         
         # Display a random welcome message if chat history is empty
-        if not st.session_state.chat_history:
+        if not st.session_state.welcome_message_displayed:
             welcome_message = random.choice(welcome_messages)
             st.session_state.chat_history.append({"role": "assistant", "content": welcome_message})
+            st.session_state.welcome_message_displayed = True
         
         for i, message in enumerate(st.session_state.chat_history):
             st.markdown(f"""
@@ -258,23 +269,8 @@ def main():
                         mime="application/pdf"
                     )
 
-        if st.session_state.show_importance_slider:
-            importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key="importance_slider")
-            if importance != st.session_state.importance:
-                st.session_state.importance = importance
-                st.session_state.importance_value_provided = True
-                st.session_state.show_importance_slider = False
-                on_slider_change("importance")
-                st.experimental_rerun()
-
-        if st.session_state.show_confidence_slider:
-            confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key="confidence_slider")
-            if confidence != st.session_state.confidence:
-                st.session_state.confidence = confidence
-                st.session_state.confidence_value_provided = True
-                st.session_state.show_confidence_slider = False
-                on_slider_change("confidence")
-                st.experimental_rerun()
+        # Call the function to display sliders
+        display_sliders()
 
         if st.session_state.show_summary_options:
             col1, col2 = st.columns(2)
@@ -301,4 +297,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
