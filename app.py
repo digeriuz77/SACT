@@ -4,10 +4,6 @@ from openai import OpenAI
 import time
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
-import uuid
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 import re
 import random
@@ -46,12 +42,6 @@ def initialize_session_state():
         st.session_state.welcome_message_displayed = False
 
 initialize_session_state()
-
-welcome_messages = [
-    "Hi, I'm a coachbot that helps you make changes. What change is next for you?",
-    "Welcome, I'm a coachbot that helps you make changes. What change would you like to make?",
-    "Hi there! I'm a coachbot that aids in decision making. What are you planning to change?"
-]
 
 # Custom color scheme
 PRIMARY_COLOR = "#d85ea7"
@@ -147,9 +137,9 @@ def analyze_sentiment(text):
 
 def export_to_pdf():
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
     flowables = [Paragraph(f"{msg['role'].capitalize()}: {msg['content']}", styles['Normal']) for msg in st.session_state.chat_history]
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
     doc.build(flowables)
     return buffer.getvalue()
 
@@ -163,10 +153,10 @@ def check_for_summary_condition(text):
     return "Would you like a summary of our conversation?" in text
 
 def check_for_readiness_review(text):
-    return "review your readiness to change" in text.lower()
+    return "review your readiness to change" in text
 
 def check_for_exit_condition(text):
-    return "exit the chat" in text.lower()
+    return "exit the chat" in text
 
 def on_slider_change(slider_type):
     if slider_type == "importance":
@@ -197,7 +187,7 @@ def rate_readiness():
 def summarize_conversation():
     st.session_state.current_assistant_id = "asst_2IN1dkowoziRpYyzSdgJbPZY"
     assistant_response = run_assistant()
-    if (assistant_response):
+    if assistant_response:
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
     st.session_state.current_assistant_id = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"  # Reset to main assistant
     st.session_state.show_summary_options = False
@@ -225,6 +215,12 @@ def display_sliders():
             st.session_state.show_confidence_slider = False
             on_slider_change("confidence")
             st.experimental_rerun()
+
+welcome_messages = [
+    "Hi, I'm a coachbot that helps you make changes. What change is next for you?",
+    "Welcome, I'm a coachbot that helps you make changes. What change would you like to make?",
+    "Hi there! I'm a coachbot that aids in decision making. What are you planning to change?"
+]
 
 def main():
     st.title("Motivational Interviewing Chatbot")
