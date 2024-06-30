@@ -74,16 +74,18 @@ st.markdown(f"""
         margin-bottom: 12px;
         font-size: 20px;
         background-color: #0a0b0b;
-        max-width: 600px;
+        max-width: 1100px;
         word-wrap: break-word;
         white-space: pre-wrap;
         word-break: break-word;
     }}
     .user-message {{
         background-color: #333538;
+        max-width: 1100px;
     }}
     .assistant-message {{
         background-color: #a538f8;
+        max-width: 1100px;
     }}
     .scrollable-container {{
         max-height: 600px;
