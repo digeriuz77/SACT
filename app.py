@@ -135,7 +135,29 @@ def export_to_pdf():
 
 def check_for_slider_condition(text):
     return "0-10" in text or "importance of change" in text.lower() or "confidence in change" in text.lower()
+    
+def on_confidence_change():
+    confidence = st.session_state.confidence
+    message = f"My confidence in my ability to change is {confidence} out of 10."
+    st.session_state.chat_history.append({"role": "user", "content": message})
+    add_message_to_thread(message)
+    with st.spinner("Thinking..."):
+        assistant_response = run_assistant()
+    if assistant_response:
+        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+    st.experimental_rerun()
 
+def on_importance_change():
+    importance = st.session_state.importance
+    message = f"The importance of this change to me is {importance} out of 10."
+    st.session_state.chat_history.append({"role": "user", "content": message})
+    add_message_to_thread(message)
+    with st.spinner("Thinking..."):
+        assistant_response = run_assistant()
+    if assistant_response:
+        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+    st.experimental_rerun()
+    
 def check_for_summary_condition(text):
     return "Would you like a summary of our conversation?" in text
 
