@@ -69,10 +69,10 @@ st.markdown(f"""
         margin-bottom: 16px;
     }}
     .chat-message {{
-        padding: 18px;
-        border-radius: 12px;
+        padding: 22px;
+        border-radius: 14px;
         margin-bottom: 12px;
-        font-size: 18px;
+        font-size: 20px;
         background-color: #0a0b0b;
         word-wrap: break-word;
         white-space: pre-wrap;
