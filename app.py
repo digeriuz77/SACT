@@ -98,7 +98,7 @@ st.markdown(f"""
         background-color: #333538; /* Change background color */
         border-radius: 20px; /* Rounded corners */
         padding: 10px; /* Add padding */
-        font-size: 18px; /* Adjust font size */
+        font-size: 24px; /* Adjust font size */
     }}
     </style>
 """, unsafe_allow_html=True)
