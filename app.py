@@ -152,28 +152,25 @@ def check_for_readiness_review(text):
 def check_for_exit_condition(text):
     return "exit the chat" in text.lower()
 
-def on_confidence_change():
-    confidence = st.session_state.confidence
-    message = f"My confidence in my ability to change is {confidence} out of 10."
+def on_slider_change(slider_type):
+    if slider_type == "importance":
+        value = st.session_state.importance
+        message = f"The importance of this change to me is {value} out of 10."
+    else:  # confidence
+        value = st.session_state.confidence
+        message = f"My confidence in my ability to change is {value} out of 10."
+    
     st.session_state.chat_history.append({"role": "user", "content": message})
     add_message_to_thread(message)
     with st.spinner("Thinking..."):
         assistant_response = run_assistant()
     if assistant_response:
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
-    st.session_state.show_confidence_slider = False
-    st.experimental_rerun()
-
-def on_importance_change():
-    importance = st.session_state.importance
-    message = f"The importance of this change to me is {importance} out of 10."
-    st.session_state.chat_history.append({"role": "user", "content": message})
-    add_message_to_thread(message)
-    with st.spinner("Thinking..."):
-        assistant_response = run_assistant()
-    if assistant_response:
-        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+    
+    # Reset slider visibility
     st.session_state.show_importance_slider = False
+    st.session_state.show_confidence_slider = False
+    
     st.experimental_rerun()
 
 def rate_readiness():
@@ -228,34 +225,30 @@ def main():
                 # Check for importance slider
                 if check_for_importance_slider(message['content']):
                     st.session_state.show_importance_slider = True
+                    st.session_state.show_confidence_slider = False
                 
                 # Check for confidence slider
-                if check_for_confidence_slider(message['content']):
+                elif check_for_confidence_slider(message['content']):
                     st.session_state.show_confidence_slider = True
+                    st.session_state.show_importance_slider = False
                 
                 # Display importance slider if prompted
                 if st.session_state.show_importance_slider:
-                    importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key=f"importance_{len(st.session_state.chat_history)}")
-                    if importance != st.session_state.importance:
-                        st.session_state.importance = importance
-                        on_importance_change()
+                    st.slider("Importance of change:", 0, 10, st.session_state.importance, key="importance", on_change=on_slider_change, args=("importance",))
                 
                 # Display confidence slider if prompted
-                if st.session_state.show_confidence_slider:
-                    confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key=f"confidence_{len(st.session_state.chat_history)}")
-                    if confidence != st.session_state.confidence:
-                        st.session_state.confidence = confidence
-                        on_confidence_change()
-            
-            # Display Export PDF button if exit condition is met
-            if message['role'] == 'assistant' and check_for_exit_condition(message['content']):
-                pdf = export_to_pdf()
-                st.download_button(
-                    label="Export Chat to PDF",
-                    data=pdf,
-                    file_name="conversation_summary.pdf",
-                    mime="application/pdf"
-                )
+                elif st.session_state.show_confidence_slider:
+                    st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key="confidence", on_change=on_slider_change, args=("confidence",))
+                
+                # Display Export PDF button if exit condition is met
+                if check_for_exit_condition(message['content']):
+                    pdf = export_to_pdf()
+                    st.download_button(
+                        label="Export Chat to PDF",
+                        data=pdf,
+                        file_name="conversation_summary.pdf",
+                        mime="application/pdf"
+                    )
 
         if st.session_state.show_summary_options:
             col1, col2 = st.columns(2)
