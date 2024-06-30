@@ -41,7 +41,7 @@ initialize_session_state()
 # Custom color scheme
 PRIMARY_COLOR = "#d85ea7"
 SECONDARY_COLOR = "#6ad85e"
-BACKGROUND_COLOR = "#353337"
+BACKGROUND_COLOR = "#daefef"
 READINESS_BUTTON_COLOR = "#cc5ed8"
 
 # Custom CSS
