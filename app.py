@@ -202,6 +202,14 @@ def continue_conversation():
     st.session_state.show_summary_options = False
     st.experimental_rerun()
 
+import random
+
+welcome_messages = [
+    "Hi, I'm a coachbot that helps you make changes. What change is next for you?",
+    "Welcome, I'm a coachbot that helps you make changes. What change would you like to make?",
+    "Hi there! I'm a coachbot that aids in decision making. What are you planning to change?"
+]
+
 def main():
     st.title("Motivational Interviewing Chatbot")
 
@@ -224,7 +232,7 @@ def main():
         if not st.session_state.chat_history:
             welcome_message = random.choice(welcome_messages)
             st.session_state.chat_history.append({"role": "assistant", "content": welcome_message})
-
+        
         for i, message in enumerate(st.session_state.chat_history):
             st.markdown(f"""
                 <div class="chat-message {'user-message' if message['role'] == 'user' else 'assistant-message'}">
@@ -293,3 +301,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
