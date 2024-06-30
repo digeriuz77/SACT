@@ -74,6 +74,7 @@ st.markdown(f"""
         margin-bottom: 12px;
         font-size: 20px;
         background-color: #0a0b0b;
+        max-width: 600px;
         word-wrap: break-word;
         white-space: pre-wrap;
         word-break: break-word;
