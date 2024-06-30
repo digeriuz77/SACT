@@ -233,6 +233,7 @@ def main():
 
             st.button("Review my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
 
+            # Buttons for summarizing or continuing the conversation
             col1, col2 = st.columns(2)
             with col1:
                 st.button("Summarize our conversation", on_click=summarize_conversation)
@@ -243,7 +244,7 @@ def main():
             st.subheader("Chat")
 
             # Display a random welcome message if chat history is empty
-            if not st.session_state.welcome_message_displayed:
+            if not st.session_state.get('welcome_message_displayed', False):
                 welcome_message = random.choice(welcome_messages)
                 st.session_state.chat_history.append({"role": "assistant", "content": welcome_message})
                 st.session_state.welcome_message_displayed = True
