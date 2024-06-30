@@ -26,6 +26,10 @@ if "confidence" not in st.session_state:
     st.session_state.confidence = 5
 if "importance" not in st.session_state:
     st.session_state.importance = 5
+if "show_importance_slider" not in st.session_state:
+    st.session_state.show_importance_slider = False
+if "show_confidence_slider" not in st.session_state:
+    st.session_state.show_confidence_slider = False
 if "show_summary_options" not in st.session_state:
     st.session_state.show_summary_options = False
 if "show_readiness_button" not in st.session_state:
@@ -163,6 +167,12 @@ def on_slider_change(slider_type):
     if assistant_response:
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
     
+    # Reset slider visibility
+    if slider_type == "importance":
+        st.session_state.show_importance_slider = False
+    else:
+        st.session_state.show_confidence_slider = False
+    
     st.experimental_rerun()
 
 def rate_readiness():
@@ -214,21 +224,11 @@ def main():
             """, unsafe_allow_html=True)
             
             if message['role'] == 'assistant':
-                # Check for importance slider
                 if check_for_importance_slider(message['content']):
-                    importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key=f"importance_{i}")
-                    if importance != st.session_state.importance:
-                        st.session_state.importance = importance
-                        on_slider_change("importance")
-                
-                # Check for confidence slider
+                    st.session_state.show_importance_slider = True
                 elif check_for_confidence_slider(message['content']):
-                    confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key=f"confidence_{i}")
-                    if confidence != st.session_state.confidence:
-                        st.session_state.confidence = confidence
-                        on_slider_change("confidence")
+                    st.session_state.show_confidence_slider = True
                 
-                # Display Export PDF button if exit condition is met
                 if check_for_exit_condition(message['content']):
                     pdf = export_to_pdf()
                     st.download_button(
@@ -237,6 +237,21 @@ def main():
                         file_name="conversation_summary.pdf",
                         mime="application/pdf"
                     )
+            
+            # Display sliders after the corresponding message
+            if st.session_state.show_importance_slider:
+                importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key=f"importance_{i}")
+                if importance != st.session_state.importance:
+                    st.session_state.importance = importance
+                    on_slider_change("importance")
+                    break  # Break the loop to trigger a rerun
+            
+            if st.session_state.show_confidence_slider:
+                confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key=f"confidence_{i}")
+                if confidence != st.session_state.confidence:
+                    st.session_state.confidence = confidence
+                    on_slider_change("confidence")
+                    break  # Break the loop to trigger a rerun
 
         if st.session_state.show_summary_options:
             col1, col2 = st.columns(2)
