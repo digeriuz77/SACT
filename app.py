@@ -313,26 +313,26 @@ def main():
                 elif check_for_confidence_slider(message['content']) and not st.session_state.confidence_value_provided:
                     st.session_state.show_confidence_slider = True
 
-if st.session_state.show_importance_slider:
-    importance = st.slider("On a scale of 0-10, how important is this change to you?", 0, 10, st.session_state.importance, key="importance_slider")
-    if importance != st.session_state.importance:
-        st.session_state.importance = importance
-        st.session_state.importance_value_provided = True
-        st.session_state.show_importance_slider = False
-        on_slider_change("importance")
+        if st.session_state.show_importance_slider:
+            importance = st.slider("On a scale of 0-10, how important is this change to you?", 0, 10, st.session_state.importance, key="importance_slider")
+            if importance != st.session_state.importance:
+                st.session_state.importance = importance
+                st.session_state.importance_value_provided = True
+                st.session_state.show_importance_slider = False
+                on_slider_change("importance")
 
-if st.session_state.show_confidence_slider:
-    confidence = st.slider("On a scale of 0-10, how confident are you in making this change?", 0, 10, st.session_state.confidence, key="confidence_slider")
-    if confidence != st.session_state.confidence:
-        st.session_state.confidence = confidence
-        st.session_state.confidence_value_provided = True
-        st.session_state.show_confidence_slider = False
-        on_slider_change("confidence")
+        if st.session_state.show_confidence_slider:
+            confidence = st.slider("On a scale of 0-10, how confident are you in making this change?", 0, 10, st.session_state.confidence, key="confidence_slider")
+            if confidence != st.session_state.confidence:
+                st.session_state.confidence = confidence
+                st.session_state.confidence_value_provided = True
+                st.session_state.show_confidence_slider = False
+                on_slider_change("confidence")
 
-    if st.session_state.show_readiness_button:
+        if st.session_state.show_readiness_button:
             st.button("Review my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
 
-    if st.session_state.show_summary_options:
+        if st.session_state.show_summary_options:
             col1, col2 = st.columns(2)
             with col1:
                 st.button("Summarize our conversation", on_click=summarize_conversation)
