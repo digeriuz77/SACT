@@ -60,14 +60,14 @@ st.markdown(f"""
         border-radius: 5px;
         background-color: {SECONDARY_COLOR};
         color: white;
-        font-size: 18px;
-        margin-bottom: 16px;
+        font-size: 16px;
+        margin-bottom: 12px;
     }}
     .chat-message {{
-        padding: 22px;
-        border-radius: 14px;
-        margin-bottom: 12px;
-        font-size: 20px;
+        padding: 12px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        font-size: 16px;
         background-color: #0a0b0b;
         max-width: 1400px;
         word-wrap: break-word;
@@ -93,7 +93,7 @@ st.markdown(f"""
         background-color: #333538; /* Change background color */
         border-radius: 20px; /* Rounded corners */
         padding: 10px; /* Add padding */
-        font-size: 24px; /* Adjust font size */
+        font-size: 16px; /* Adjust font size */
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -146,6 +146,8 @@ def analyze_sentiment(text):
 def rate_readiness():
     st.session_state.current_assistant_id = "asst_u4tbCd0KubyMYfKeD59bBxjM"
     save_chat()  # Save chat to create the log file
+    chat_log = " ".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
+    add_message_to_thread(f"Review the following chat log for change talk:\n{chat_log}")
     assistant_response = run_assistant()
     if assistant_response:
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
@@ -155,6 +157,8 @@ def rate_readiness():
 def summarize_conversation():
     st.session_state.current_assistant_id = "asst_2IN1dkowoziRpYyzSdgJbPZY"
     save_chat()  # Save chat to create the log file
+    chat_log = " ".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
+    add_message_to_thread(f"Please summarize the following chat log:\n{chat_log}")
     assistant_response = run_assistant()
     if assistant_response:
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
@@ -242,18 +246,20 @@ def main():
             sentiment = analyze_sentiment(" ".join(msg["content"] for msg in st.session_state["chat_history"]))
             st.markdown(f'<div class="sentiment-box">Sentiment: {sentiment:.2f}</div>', unsafe_allow_html=True)
 
-        # Buttons for functionality
-        if st.button("Start Over"):
-            reset_chat()
-
-        if st.button("Save Chat"):
-            save_chat()
-
-        if st.button("Summarize"):
-            summarize_conversation()
-
-        if st.button("Review Readiness"):
-            rate_readiness()
+        # Buttons for functionality in a row
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            if st.button("Start Over"):
+                reset_chat()
+        with col2:
+            if st.button("Save Chat"):
+                save_chat()
+        with col3:
+            if st.button("Summarize"):
+                summarize_conversation()
+        with col4:
+            if st.button("Review Readiness"):
+                rate_readiness()
 
 if __name__ == "__main__":
     main()
