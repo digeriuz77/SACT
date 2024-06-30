@@ -218,18 +218,18 @@ def main():
             st.button("Rate my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
 
     with col2:
-         st.subheader("Chat")
-        st.write(f"Show importance slider: {st.session_state.show_importance_slider}")
-        st.write(f"Show confidence slider: {st.session_state.show_confidence_slider}")
-        st.write(f"Importance value provided: {st.session_state.get('importance_value_provided', False)}")
-        st.write(f"Confidence value provided: {st.session_state.get('confidence_value_provided', False)}")
+    st.subheader("Chat")
+    st.write(f"Show importance slider: {st.session_state.show_importance_slider}")
+    st.write(f"Show confidence slider: {st.session_state.show_confidence_slider}")
+    st.write(f"Importance value provided: {st.session_state.get('importance_value_provided', False)}")
+    st.write(f"Confidence value provided: {st.session_state.get('confidence_value_provided', False)}")
         
-        for i, message in enumerate(st.session_state.chat_history):
-            st.markdown(f"""
-                <div class="chat-message {'user-message' if message['role'] == 'user' else 'assistant-message'}">
-                    <b>{message['role'].capitalize()}:</b> {message['content']}
-                </div>
-            """, unsafe_allow_html=True)
+    for i, message in enumerate(st.session_state.chat_history):
+        st.markdown(f"""
+            <div class="chat-message {'user-message' if message['role'] == 'user' else 'assistant-message'}">
+                <b>{message['role'].capitalize()}:</b> {message['content']}
+            </div>
+        """, unsafe_allow_html=True)
             
             if message['role'] == 'assistant':
                 if check_for_importance_slider(message['content']):
