@@ -202,23 +202,30 @@ def continue_conversation():
     st.experimental_rerun()
 
 def display_sliders():
+    slider_placeholder = st.empty()
     if st.session_state.show_importance_slider:
-        importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key="importance_slider")
-        if importance != st.session_state.importance:
-            st.session_state.importance = importance
-            st.session_state.importance_value_provided = True
-            st.session_state.show_importance_slider = False
-            on_slider_change("importance")
-            st.experimental_rerun()
+        with slider_placeholder:
+            importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key="importance_slider")
+            if importance != st.session_state.importance:
+                st.session_state.importance = importance
+                st.session_state.importance_value_provided = True
+                st.session_state.show_importance_slider = False
+                on_slider_change("importance")
+                slider_placeholder.empty()
+                time.sleep(0.5)
+                st.experimental_rerun()
 
     if st.session_state.show_confidence_slider:
-        confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key="confidence_slider")
-        if confidence != st.session_state.confidence:
-            st.session_state.confidence = confidence
-            st.session_state.confidence_value_provided = True
-            st.session_state.show_confidence_slider = False
-            on_slider_change("confidence")
-            st.experimental_rerun()
+        with slider_placeholder:
+            confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key="confidence_slider")
+            if confidence != st.session_state.confidence:
+                st.session_state.confidence = confidence
+                st.session_state.confidence_value_provided = True
+                st.session_state.show_confidence_slider = False
+                on_slider_change("confidence")
+                slider_placeholder.empty()
+                time.sleep(0.5)
+                st.experimental_rerun()
 
 def process_messages():
     for i, message in enumerate(st.session_state.chat_history):
@@ -249,23 +256,23 @@ def main():
 
     with col1:
         st.markdown("<h3 style='font-size: 18px;'>Metrics</h3>", unsafe_allow_html=True)
-        
+
         if st.session_state.chat_history:
             sentiment = analyze_sentiment(" ".join(msg["content"] for msg in st.session_state.chat_history))
             st.markdown(f'<div class="sentiment-box">Sentiment: {sentiment:.2f}</div>', unsafe_allow_html=True)
-        
+
         if st.session_state.show_readiness_button:
             st.button("Rate my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
 
     with col2:
         st.subheader("Chat")
-        
+
         # Display a random welcome message if chat history is empty
         if not st.session_state.welcome_message_displayed:
             welcome_message = random.choice(welcome_messages)
             st.session_state.chat_history.append({"role": "assistant", "content": welcome_message})
             st.session_state.welcome_message_displayed = True
-        
+
         process_messages()
 
         # Call the function to display sliders
@@ -279,20 +286,25 @@ def main():
                 st.button("No, continue", on_click=continue_conversation)
 
         user_input = st.chat_input("Type your message here...")
-        
+
         if user_input:
             st.session_state.chat_history.append({"role": "user", "content": user_input})
             add_message_to_thread(user_input)
-            
+
             with st.spinner("Thinking..."):
                 assistant_response = run_assistant()
-            
+
             if assistant_response:
                 st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
                 st.session_state.show_summary_options = check_for_summary_condition(assistant_response)
                 st.session_state.show_readiness_button = check_for_readiness_review(assistant_response)
-            
+
+            # Use st.empty() container and manually empty it before rerun
+            slider_placeholder = st.empty()
+            slider_placeholder.empty()
+            time.sleep(0.5)
             st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
+
