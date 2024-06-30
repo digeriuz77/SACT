@@ -195,62 +195,6 @@ def continue_conversation():
     st.session_state.show_summary_options = False
     st.experimental_rerun()
 
-Given the predictable and consistent input from the assistant, we can streamline the process by ensuring the sliders appear correctly in response to the assistant's messages. Let's implement **Alternative 1** as it separates the logic of checking the assistant's messages and rendering the sliders clearly.
-
-Here is the detailed step-by-step guidance to modify the code:
-
-1. **Update the State Setting Logic:**
-
-   Locate the section where you check the assistant's messages to set state variables for showing the sliders.
-
-   ```python
-   if message['role'] == 'assistant':
-       if check_for_importance_slider(message['content']) and not st.session_state.importance_value_provided:
-           st.session_state.show_importance_slider = True
-       elif check_for_confidence_slider(message['content']) and not st.session_state.confidence_value_provided:
-           st.session_state.show_confidence_slider = True
-   ```
-
-   Update this section to set the state variables `show_importance_slider` and `show_confidence_slider`.
-
-2. **Render Sliders Outside the Loop:**
-
-   Add the following code after the loop that displays the chat history. This will render the sliders based on the state variables.
-
-   ```python
-   if st.session_state.show_importance_slider:
-       importance = st.slider("Importance of change:", 0, 10, st.session_state.importance, key="importance_slider")
-       if importance != st.session_state.importance:
-           st.session_state.importance = importance
-           st.session_state.importance_value_provided = True
-           st.session_state.show_importance_slider = False
-           on_slider_change("importance")
-           st.experimental_rerun()
-
-   if st.session_state.show_confidence_slider:
-       confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key="confidence_slider")
-       if confidence != st.session_state.confidence:
-           st.session_state.confidence = confidence
-           st.session_state.confidence_value_provided = True
-           st.session_state.show_confidence_slider = False
-           on_slider_change("confidence")
-           st.experimental_rerun()
-   ```
-
-3. **Ensure State Variables Initialization:**
-
-   Ensure that `show_importance_slider` and `show_confidence_slider` are initialized in the session state if they are not already:
-
-   ```python
-   if "show_importance_slider" not in st.session_state:
-       st.session_state.show_importance_slider = False
-   if "show_confidence_slider" not in st.session_state:
-       st.session_state.show_confidence_slider = False
-   ```
-
-Here is the full updated `main` function with the necessary changes:
-
-```python
 def main():
     st.title("Motivational Interviewing Chatbot")
 
@@ -337,4 +281,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
