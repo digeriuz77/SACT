@@ -138,10 +138,10 @@ def export_to_pdf():
     return buffer.getvalue()
 
 def check_for_importance_slider(text):
-    return "importance of change" in text.lower()
+    return "On a scale from 0 to 10, how important" in text.lower()
 
 def check_for_confidence_slider(text):
-    return "confidence in your ability to change" in text.lower()
+    return "on a scale from 0 to 10, how confident" in text.lower()
 
 def check_for_summary_condition(text):
     return "Would you like a summary of our conversation?" in text
