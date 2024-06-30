@@ -218,7 +218,13 @@ def main():
             st.button("Rate my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
 
     with col2:
-        st.subheader("Chat")
+         st.subheader("Chat")
+        
+        # Debug information
+        st.write(f"Show importance slider: {st.session_state.show_importance_slider}")
+        st.write(f"Show confidence slider: {st.session_state.show_confidence_slider}")
+        st.write(f"Importance value provided: {st.session_state.get('importance_value_provided', False)}")
+        st.write(f"Confidence value provided: {st.session_state.get('confidence_value_provided', False)}")
         
         for i, message in enumerate(st.session_state.chat_history):
             st.markdown(f"""
@@ -228,10 +234,12 @@ def main():
             """, unsafe_allow_html=True)
             
             if message['role'] == 'assistant':
-                if check_for_importance_slider(message['content']) and not st.session_state.get('importance_value_provided', False):
+                if check_for_importance_slider(message['content']):
                     st.session_state.show_importance_slider = True
-                elif check_for_confidence_slider(message['content']) and not st.session_state.get('confidence_value_provided', False):
+                    st.write("Importance slider should be shown")
+                elif check_for_confidence_slider(message['content']):
                     st.session_state.show_confidence_slider = True
+                    st.write("Confidence slider should be shown")
                 
                 if check_for_exit_condition(message['content']):
                     pdf = export_to_pdf()
@@ -249,7 +257,7 @@ def main():
                     st.session_state.importance = importance
                     st.session_state.importance_value_provided = True
                     on_slider_change("importance")
-                    break  # Break the loop to trigger a rerun
+                    st.experimental_rerun()
             
             if st.session_state.show_confidence_slider and not st.session_state.get('confidence_value_provided', False):
                 confidence = st.slider("Confidence in ability to change:", 0, 10, st.session_state.confidence, key=f"confidence_{i}")
@@ -257,7 +265,8 @@ def main():
                     st.session_state.confidence = confidence
                     st.session_state.confidence_value_provided = True
                     on_slider_change("confidence")
-                    break  # Break the loop to trigger a rerun
+                    st.experimental_rerun()
+
 
 
         if st.session_state.show_summary_options:
