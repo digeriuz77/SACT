@@ -249,27 +249,14 @@ def main():
             st.markdown(f'<div class="sentiment-box">Sentiment: {sentiment:.2f}</div>', unsafe_allow_html=True)
 
         # Buttons row
-        button_col1, button_col2, button_col3, button_col4 = st.columns(4)
-        with button_col1:
-            st.markdown('<div style="text-align: center; margin-bottom: 10px;">', unsafe_allow_html=True)
-            st.button("Start Over", on_click=reset_chat, key="start_over", help="Start Over", 
-                      use_container_width=True, css={"background-color": "#a1a53b"})
-            st.markdown('</div>', unsafe_allow_html=True)
-        with button_col2:
-            st.markdown('<div style="text-align: center; margin-bottom: 10px;">', unsafe_allow_html=True)
-            st.button("Save Chat", on_click=save_chat, key="save_chat", help="Save Chat", 
-                      use_container_width=True, css={"background-color": "#3f3ba5"})
-            st.markdown('</div>', unsafe_allow_html=True)
-        with button_col3:
-            st.markdown('<div style="text-align: center; margin-bottom: 10px;">', unsafe_allow_html=True)
-            st.button("Summarize", on_click=summarize_conversation, key="summarize", help="Summarize", 
-                      use_container_width=True, css={"background-color": "#a53b6c"})
-            st.markdown('</div>', unsafe_allow_html=True)
-        with button_col4:
-            st.markdown('<div style="text-align: center; margin-bottom: 10px;">', unsafe_allow_html=True)
-            st.button("Review Readiness", on_click=rate_readiness, key="rate_readiness", help="Review Readiness", 
-                      use_container_width=True, css={"background-color": "#a53b3b"})
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <button onclick="startOver()" style="background-color: #a1a53b; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">Start Over</button>
+            <button onclick="saveChat()" style="background-color: #3f3ba5; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">Save Chat</button>
+            <button onclick="summarize()" style="background-color: #a53b6c; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">Summarize</button>
+            <button onclick="rateReadiness()" style="background-color: #a53b3b; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">Review Readiness</button>
+        </div>
+        """, unsafe_allow_html=True)
 
         # Sliders
         importance = st.slider("On a scale of 0-10, how important is this change to you?", 0, 10, st.session_state.get("importance", 5), key="importance_slider")
@@ -282,6 +269,24 @@ def main():
         if confidence != st.session_state.get("confidence"):
             st.session_state["confidence"] = confidence
             on_slider_change("confidence")
+
+    # Add custom JavaScript to trigger Streamlit actions
+    st.markdown("""
+    <script>
+    function startOver() {
+        document.querySelector('button[k="start_over"]').click();
+    }
+    function saveChat() {
+        document.querySelector('button[k="save_chat"]').click();
+    }
+    function summarize() {
+        document.querySelector('button[k="summarize"]').click();
+    }
+    function rateReadiness() {
+        document.querySelector('button[k="rate_readiness"]').click();
+    }
+    </script>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
