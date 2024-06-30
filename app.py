@@ -74,18 +74,18 @@ st.markdown(f"""
         margin-bottom: 12px;
         font-size: 20px;
         background-color: #0a0b0b;
-        max-width: 1100px;
+        max-width: 1400px;
         word-wrap: break-word;
         white-space: pre-wrap;
         word-break: break-word;
     }}
     .user-message {{
         background-color: #333538;
-        max-width: 1100px;
+        max-width: 1400px;
     }}
     .assistant-message {{
         background-color: #a538f8;
-        max-width: 1100px;
+        max-width: 1400px;
     }}
     .scrollable-container {{
         max-height: 600px;
@@ -94,7 +94,8 @@ st.markdown(f"""
     /* Custom styling for chat input */
     .stTextInput input {{
         color: white; /* Change text color */
-        background-color: {PRIMARY_COLOR}; /* Change background color */
+        max-width: 1400px;
+        background-color: #333538; /* Change background color */
         border-radius: 20px; /* Rounded corners */
         padding: 10px; /* Add padding */
         font-size: 18px; /* Adjust font size */
