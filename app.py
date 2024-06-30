@@ -84,7 +84,7 @@ st.markdown(f"""
         max-width: 1400px;
     }}
     .assistant-message {{
-        background-color: #a538f8;
+        background-color: #093d13;
         max-width: 1400px;
     }}
     .scrollable-container {{
