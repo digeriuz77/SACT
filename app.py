@@ -47,6 +47,12 @@ def initialize_session_state():
 
 initialize_session_state()
 
+welcome_messages = [
+    "Hi, I'm a coachbot that helps you make changes. What change is next for you?",
+    "Welcome, I'm a coachbot that helps you make changes. What change would you like to make?",
+    "Hi there! I'm a coachbot that aids in decision making. What are you planning to change?"
+]
+
 # Custom color scheme
 PRIMARY_COLOR = "#d85ea7"
 SECONDARY_COLOR = "#6ad85e"
