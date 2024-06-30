@@ -77,10 +77,10 @@ st.markdown(f"""
         word-break: break-word;
     }}
     .user-message {{
-        background-color: #000000;
+        background-color: #333538;
     }}
     .assistant-message {{
-        background-color: #150426;
+        background-color: #a538f8;
     }}
     .scrollable-container {{
         max-height: 600px;
