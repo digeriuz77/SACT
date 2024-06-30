@@ -4,7 +4,6 @@ from openai import OpenAI
 import time
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
-from io import BytesIO
 import re
 import random
 import logging
@@ -243,33 +242,18 @@ def main():
             sentiment = analyze_sentiment(" ".join(msg["content"] for msg in st.session_state["chat_history"]))
             st.markdown(f'<div class="sentiment-box">Sentiment: {sentiment:.2f}</div>', unsafe_allow_html=True)
 
-        # Buttons row
-        st.markdown("""
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <button onclick="startOver()" style="background-color: #a1a53b; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">Start Over</button>
-            <button onclick="saveChat()" style="background-color: #3f3ba5; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">Save Chat</button>
-            <button onclick="summarize()" style="background-color: #a53b6c; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">Summarize</button>
-            <button onclick="rateReadiness()" style="background-color: #a53b3b; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">Review Readiness</button>
-        </div>
-        """, unsafe_allow_html=True)
+        # Buttons for functionality
+        if st.button("Start Over"):
+            reset_chat()
 
-    # Add custom JavaScript to trigger Streamlit actions
-    st.markdown("""
-    <script>
-    function startOver() {
-        document.querySelector('button[k="start_over"]').click();
-    }
-    function saveChat() {
-        document.querySelector('button[k="save_chat"]').click();
-    }
-    function summarize() {
-        document.querySelector('button[k="summarize"]').click();
-    }
-    function rateReadiness() {
-        document.querySelector('button[k="rate_readiness"]').click();
-    }
-    </script>
-    """, unsafe_allow_html=True)
+        if st.button("Save Chat"):
+            save_chat()
+
+        if st.button("Summarize"):
+            summarize_conversation()
+
+        if st.button("Review Readiness"):
+            rate_readiness()
 
 if __name__ == "__main__":
     main()
