@@ -18,10 +18,10 @@ nltk.download('vader_lexicon', quiet=True)
 st.set_page_config(page_title="Motivational Interviewing Chatbot", layout="wide")
 
 # Custom color scheme
-PRIMARY_COLOR = "#4CAF50"
-SECONDARY_COLOR = "#2196F3"
-BACKGROUND_COLOR = "#F1F8E9"
-READINESS_BUTTON_COLOR = "#FF4500"
+PRIMARY_COLOR = "#d85ea7"
+SECONDARY_COLOR = "#6ad85e"
+BACKGROUND_COLOR = "#5ed88f"
+READINESS_BUTTON_COLOR = "#cc5ed8"
 
 # Custom CSS
 st.markdown(f"""
