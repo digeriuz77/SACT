@@ -200,82 +200,82 @@ welcome_messages = [
 def main():
     st.title("Motivational Interviewing Chatbot")
 
-    # Create a scrollable container for the columns
-    with st.container():
-        col1, col2 = st.columns([1, 3])
+    # Create a container for chat and controls
+    chat_container = st.container()
+    controls_container = st.container()
 
-        with col1:
-            st.markdown("<h3 style='font-size: 18px;'>Metrics</h3>", unsafe_allow_html=True)
+    with chat_container:
+        st.subheader("Chat")
 
-            if st.session_state.chat_history:
-                sentiment = analyze_sentiment(" ".join(msg["content"] for msg in st.session_state.chat_history))
-                st.markdown(f'<div class="sentiment-box">Sentiment: {sentiment:.2f}</div>', unsafe_allow_html=True)
+        # Display a random welcome message if chat history is empty
+        if not st.session_state.get('welcome_message_displayed', False):
+            welcome_message = random.choice(welcome_messages)
+            st.session_state.setdefault("chat_history", []).append({"role": "assistant", "content": welcome_message})
+            st.session_state["welcome_message_displayed"] = True
 
-            st.button("Start Over", on_click=reset_chat, key="start_over")
-            st.button("Save Chat", on_click=save_chat, key="save_chat")
-            
-            saved_chats = get_saved_chats()
-            selected_chat = st.selectbox("Load Chat", [""] + saved_chats, key="load_chat")
-            if selected_chat:
-                load_chat(selected_chat)
+        for i, message in enumerate(st.session_state["chat_history"]):
+            if message['role'] == 'assistant':
+                st.markdown(f"""
+                    <div class="chat-message assistant-message">
+                        🐙 {message['content']}
+                    </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                    <div class="chat-message user-message">
+                        <b>You:</b> {message['content']}
+                    </div>
+                """, unsafe_allow_html=True)
 
-            # Sliders
-            importance = st.slider("On a scale of 0-10, how important is this change to you?", 0, 10, st.session_state.importance, key="importance_slider")
-            confidence = st.slider("On a scale of 0-10, how confident are you in making this change?", 0, 10, st.session_state.confidence, key="confidence_slider")
+        user_input = st.chat_input("Type your message...", key="user_input")
 
-            if importance != st.session_state.importance:
-                st.session_state.importance = importance
-                on_slider_change("importance")
+        if user_input:
+            st.session_state["chat_history"].append({"role": "user", "content": user_input})
+            add_message_to_thread(user_input)
 
-            if confidence != st.session_state.confidence:
-                st.session_state.confidence = confidence
-                on_slider_change("confidence")
+            with st.spinner("Thinking..."):
+                assistant_response = run_assistant()
 
-            st.button("Review my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
+            if assistant_response:
+                st.session_state["chat_history"].append({"role": "assistant", "content": assistant_response})
 
-            # Buttons for summarizing or continuing the conversation
-            col1, col2 = st.columns(2)
-            with col1:
-                st.button("Summarize our conversation", on_click=summarize_conversation)
-            with col2:
-                st.button("Continue our conversation", on_click=continue_conversation)
+            st.experimental_rerun()
 
-        with col2:
-            st.subheader("Chat")
+    with controls_container:
+        st.markdown("<h3 style='font-size: 18px;'>Metrics</h3>", unsafe_allow_html=True)
 
-            # Display a random welcome message if chat history is empty
-            if not st.session_state.get('welcome_message_displayed', False):
-                welcome_message = random.choice(welcome_messages)
-                st.session_state.chat_history.append({"role": "assistant", "content": welcome_message})
-                st.session_state.welcome_message_displayed = True
+        if st.session_state.get("chat_history"):
+            sentiment = analyze_sentiment(" ".join(msg["content"] for msg in st.session_state["chat_history"]))
+            st.markdown(f'<div class="sentiment-box">Sentiment: {sentiment:.2f}</div>', unsafe_allow_html=True)
 
-            for i, message in enumerate(st.session_state.chat_history):
-                if message['role'] == 'assistant':
-                    st.markdown(f"""
-                        <div class="chat-message assistant-message">
-                            🐙 {message['content']}
-                        </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.markdown(f"""
-                        <div class="chat-message user-message">
-                            <b>You:</b> {message['content']}
-                        </div>
-                    """, unsafe_allow_html=True)
+        st.button("Start Over", on_click=reset_chat, key="start_over")
+        st.button("Save Chat", on_click=save_chat, key="save_chat")
+        
+        saved_chats = get_saved_chats()
+        selected_chat = st.selectbox("Load Chat", [""] + saved_chats, key="load_chat")
+        if selected_chat:
+            load_chat(selected_chat)
 
-            user_input = st.chat_input("Type your message...", key="user_input")
+        # Sliders
+        importance = st.slider("On a scale of 0-10, how important is this change to you?", 0, 10, st.session_state.get("importance", 5), key="importance_slider")
+        confidence = st.slider("On a scale of 0-10, how confident are you in making this change?", 0, 10, st.session_state.get("confidence", 5), key="confidence_slider")
 
-            if user_input:
-                st.session_state.chat_history.append({"role": "user", "content": user_input})
-                add_message_to_thread(user_input)
+        if importance != st.session_state.get("importance"):
+            st.session_state["importance"] = importance
+            on_slider_change("importance")
 
-                with st.spinner("Thinking..."):
-                    assistant_response = run_assistant()
+        if confidence != st.session_state.get("confidence"):
+            st.session_state["confidence"] = confidence
+            on_slider_change("confidence")
 
-                if assistant_response:
-                    st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+        st.button("Review my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
 
-                st.experimental_rerun()
+        # Buttons for summarizing or continuing the conversation
+        col1_inner, col2_inner = st.columns(2)
+        with col1_inner:
+            st.button("Summarize our conversation", on_click=summarize_conversation)
+        with col2_inner:
+            st.button("Continue our conversation", on_click=continue_conversation)
 
 if __name__ == "__main__":
     main()
