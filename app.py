@@ -74,12 +74,12 @@ st.markdown(f"""
         border-radius: 5px;
         background-color: {SECONDARY_COLOR};
         color: white;
-        font-size: 14px;
-        margin-bottom: 10px;
+        font-size: 18px;
+        margin-bottom: 16px;
     }}
     .chat-message {{
         padding: 10px;
-        border-radius: 5px;
+        border-radius: 9px;
         margin-bottom: 10px;
         word-wrap: break-word;
         white-space: pre-wrap;
@@ -255,7 +255,7 @@ def main():
     col1, col2 = st.columns([1, 3])
 
     with col1:
-        st.markdown("<h3 style='font-size: 18px;'>Metrics</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 24px;'>Metrics</h3>", unsafe_allow_html=True)
 
         if st.session_state.chat_history:
             sentiment = analyze_sentiment(" ".join(msg["content"] for msg in st.session_state.chat_history))
