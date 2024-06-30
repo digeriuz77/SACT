@@ -219,12 +219,10 @@ def main():
 
     with col2:
          st.subheader("Chat")
-        
-        # Debug information
-        st.write(f"Show importance slider: {st.session_state.show_importance_slider}")
-        st.write(f"Show confidence slider: {st.session_state.show_confidence_slider}")
-        st.write(f"Importance value provided: {st.session_state.get('importance_value_provided', False)}")
-        st.write(f"Confidence value provided: {st.session_state.get('confidence_value_provided', False)}")
+            st.write(f"Show importance slider: {st.session_state.show_importance_slider}")
+            st.write(f"Show confidence slider: {st.session_state.show_confidence_slider}")
+            st.write(f"Importance value provided: {st.session_state.get('importance_value_provided', False)}")
+            st.write(f"Confidence value provided: {st.session_state.get('confidence_value_provided', False)}")
         
         for i, message in enumerate(st.session_state.chat_history):
             st.markdown(f"""
