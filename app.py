@@ -20,7 +20,7 @@ st.set_page_config(page_title="Motivational Interviewing Chatbot", layout="wide"
 # Custom color scheme
 PRIMARY_COLOR = "#d85ea7"
 SECONDARY_COLOR = "#6ad85e"
-BACKGROUND_COLOR = "#5ed88f"
+BACKGROUND_COLOR = "#281b4a"
 READINESS_BUTTON_COLOR = "#cc5ed8"
 
 # Custom CSS
