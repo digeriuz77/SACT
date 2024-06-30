@@ -329,7 +329,7 @@ if st.session_state.show_confidence_slider:
         st.session_state.show_confidence_slider = False
         on_slider_change("confidence")
 
-        if st.session_state.show_readiness_button:
+         if st.session_state.show_readiness_button:
             st.button("Review my readiness to change", on_click=rate_readiness, key="rate_readiness", type="primary")
 
         if st.session_state.show_summary_options:
