@@ -252,10 +252,40 @@ welcome_messages = [
 def main():
     st.title("Motivational Interviewing Chatbot")
 
+    # Custom CSS for slider
+    st.markdown(
+        """
+        <style>
+        /* Customize the slider container */
+        div.stSlider > div[data-baseweb="slider"] > div {
+            background: rgb(1 1 1 / 0%);
+        }
+
+        /* Customize the slider cursor */
+        div.stSlider > div[data-baseweb="slider"] > div > div > div[role="slider"] {
+            background-color: rgb(255, 0, 0); /* Red dot */
+            box-shadow: rgb(255 0 0 / 20%) 0px 0px 0px 0.2rem;
+        }
+
+        /* Customize the slider numbers */
+        div.stSlider > div[data-baseweb="slider"] > div > div > div > div {
+            color: rgb(255, 255, 255); /* White numbers */
+        }
+
+        /* Increase the font size of the slider label */
+        div.stSlider label {
+            font-size: 18px;
+            color: white;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     col1, col2 = st.columns([1, 3])
 
     with col1:
-        st.markdown("<h3 style='font-size: 24px;'>Metrics</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 18px;'>Metrics</h3>", unsafe_allow_html=True)
 
         if st.session_state.chat_history:
             sentiment = analyze_sentiment(" ".join(msg["content"] for msg in st.session_state.chat_history))
@@ -307,4 +337,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
