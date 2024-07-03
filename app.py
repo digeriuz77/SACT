@@ -8,6 +8,7 @@ import random
 import json
 from datetime import datetime
 import os
+import base64
 
 # Initialize logging
 import logging
@@ -17,7 +18,7 @@ logging.basicConfig(level=logging.DEBUG)
 nltk.download('vader_lexicon', quiet=True)
 
 # Streamlit configuration
-st.set_page_config(page_title="Motivational Interviewing Chatbot", layout="wide")
+st.set_page_config(page_title="🌘 VHL Make-a-change Coachbot 🌖", layout="wide")
 
 # Initialize session state
 def initialize_session_state():
@@ -29,6 +30,8 @@ def initialize_session_state():
         st.session_state.current_assistant_id = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"
     if "welcome_message_displayed" not in st.session_state:
         st.session_state.welcome_message_displayed = False
+    if "saved_chats" not in st.session_state:
+        st.session_state.saved_chats = []
 
 initialize_session_state()
 
@@ -108,20 +111,36 @@ def reset_chat():
     st.experimental_rerun()
 
 def save_chat():
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    filename = f"chat_history_{timestamp}.json"
-    with open(filename, "w") as f:
-        json.dump(st.session_state.chat_history, f)
-    st.success(f"Chat history saved as {filename}")
+    chat_data = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+        "chat_history": st.session_state.chat_history
+    }
+    st.session_state.saved_chats.append(chat_data)
+    st.success(f"Chat history saved")
 
 def get_saved_chats():
-    return [f for f in os.listdir(".") if f.startswith("chat_history_") and f.endswith(".json")]
+    return st.session_state.saved_chats
 
-def load_chat(filename):
-    with open(filename, "r") as f:
-        st.session_state.chat_history = json.load(f)
+def load_chat(chat_data):
+    st.session_state.chat_history = chat_data['chat_history']
     st.session_state.welcome_message_displayed = True
     st.experimental_rerun()
+
+def export_chat():
+    chat_text = "\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in st.session_state.chat_history])
+    b64 = base64.b64encode(chat_text.encode()).decode()
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"chat_export_{timestamp}.txt"
+    href = f'<a href="data:file/txt;base64,{b64}" download="{filename}">Download Chat History</a>'
+    return href
+
+def show_info():
+    st.markdown("""
+    <div style="padding: 10px; border-radius: 5px; background-color: #007bff; color: white;">
+    <p>The VHL Make-a-change Coachbot is written by Gary Stanyard of Virtual Health Labs.</p>
+    <p>You can find out more about VHL here: <a href="https://strategichealth.kartra.com/page/Coachbot" target="_blank" style="color: white;">VHL</a></p>
+    </div>
+    """, unsafe_allow_html=True)
 
 welcome_messages = [
     "Hi there! I'm a coach specializing in motivational interviewing. What change are you considering?",
@@ -130,7 +149,11 @@ welcome_messages = [
 ]
 
 def main():
-    st.title("Motivational Interviewing Chatbot")
+    st.title("VHL Make-a-change Coachbot")
+
+    # Info button
+    if st.button("ℹ️ About", help="Click for more information"):
+        show_info()
 
     # Create a container for chat and controls
     chat_container = st.container()
@@ -179,7 +202,7 @@ def main():
             st.write(f'Sentiment: {sentiment:.2f}')
 
         # Buttons for functionality in a row
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
             if st.button("Start Over"):
                 reset_chat()
@@ -192,6 +215,19 @@ def main():
         with col4:
             if st.button("Review Readiness"):
                 rate_readiness()
+        with col5:
+            st.markdown(export_chat(), unsafe_allow_html=True)
+
+        # Saved chats dropdown
+        saved_chats = get_saved_chats()
+        if saved_chats:
+            selected_chat = st.selectbox(
+                "Load a saved chat",
+                options=saved_chats,
+                format_func=lambda x: x['timestamp']
+            )
+            if st.button("Load Selected Chat"):
+                load_chat(selected_chat)
 
 if __name__ == "__main__":
     main()
