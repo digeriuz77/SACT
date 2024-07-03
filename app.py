@@ -199,48 +199,42 @@ def main():
     if st.button("ℹ️ About", help="Click for more information"):
         show_info()
 
-    # Create a two-column layout
-    col1, col2 = st.columns([3, 1])
+    # Create a container for chat and controls
+    chat_container = st.container()
+    input_container = st.container()
+    controls_container = st.container()
 
-    with col1:
-        # Chat history container
-        chat_container = st.container()
+    with chat_container:
+        st.subheader("Chat")
         
-        with chat_container:
-            st.subheader("Chat")
-            
+        chat_placeholder = st.empty()
+        
+        with chat_placeholder.container():
             for message in st.session_state.chat_history:
                 if message['role'] == 'assistant':
                     st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{message["content"]}</div></div>', unsafe_allow_html=True)
                 else:
                     st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-start;"><div class="user-message">{message["content"]}</div></div>', unsafe_allow_html=True)
 
-        # Streaming message placeholder
-        streaming_placeholder = st.empty()
+    with input_container:
+        user_input = st.chat_input("Type your message...", key="user_input")
 
-    with col2:
-        # Input area
-        user_input = st.text_input("Type your message...", key="user_input")
-        if st.button("Send"):
-            if user_input:
-                st.session_state.chat_history.append({"role": "user", "content": user_input})
-                add_message_to_thread(user_input)
+        if user_input:
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
+            add_message_to_thread(user_input)
 
-                with st.spinner("Thinking..."):
-                    assistant_response = run_assistant()
+            with st.spinner("Thinking..."):
+                assistant_response = run_assistant()
 
-                if assistant_response:
-                    message_placeholder = streaming_placeholder.empty()
-                    full_response = ""
-                    for chunk in stream_response(assistant_response):
-                        message_placeholder.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{chunk}</div></div>', unsafe_allow_html=True)
-                        time.sleep(0.05)
-                    st.session_state.chat_history.append({"role": "assistant", "content": chunk})
+            if assistant_response:
+                message_placeholder = st.empty()
+                full_response = ""
+                for chunk in stream_response(assistant_response):
+                    message_placeholder.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{chunk}</div></div>', unsafe_allow_html=True)
+                    time.sleep(0.05)
+                st.session_state.chat_history.append({"role": "assistant", "content": chunk})
 
-                st.experimental_rerun()
-
-    # Controls container
-    controls_container = st.container()
+            st.experimental_rerun()
 
     with controls_container:
         if st.session_state.get("chat_history"):
