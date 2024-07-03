@@ -195,6 +195,10 @@ welcome_messages = [
 def main():
     st.title("✨VHL Change Coachbot")
 
+    # Choose a random welcome message for the subheader if not already set
+    if "welcome_subheader" not in st.session_state:
+        st.session_state.welcome_subheader = random.choice(welcome_messages)
+
     # Info button
     if st.button("ℹ️ About", help="Click for more information"):
         show_info()
@@ -204,6 +208,11 @@ def main():
     streaming_container = st.container()
     input_container = st.container()
     controls_container = st.container()
+
+    with chat_container:
+        st.subheader(st.session_state.welcome_subheader)
+        
+        # ... rest of the chat container code
 
     with chat_container:
         # Choose a random welcome message for the subheader
