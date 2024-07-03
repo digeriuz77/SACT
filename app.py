@@ -193,7 +193,7 @@ welcome_messages = [
 ##
 
 def main():
-    st.title("VHL Make-a-change Coachbot")
+    st.title("✨VHL Change Coachbot")
 
     # Info button
     if st.button("ℹ️ About", help="Click for more information"):
@@ -206,13 +206,17 @@ def main():
     controls_container = st.container()
 
     with chat_container:
-        st.subheader("Chat")
+        # Choose a random welcome message for the subheader
+        welcome_subheader = random.choice(welcome_messages)
+        st.subheader(welcome_subheader)
         
-        for message in st.session_state.chat_history:
+        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+        for message in reversed(st.session_state.chat_history):
             if message['role'] == 'assistant':
                 st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{message["content"]}</div></div>', unsafe_allow_html=True)
             else:
                 st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-start;"><div class="user-message">{message["content"]}</div></div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True
 
     with input_container:
         user_input = st.chat_input("Type your message...", key="user_input")
