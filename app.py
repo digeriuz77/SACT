@@ -199,22 +199,20 @@ def main():
     if st.button("ℹ️ About", help="Click for more information"):
         show_info()
 
-    # Create a container for chat and controls
+    # Create containers
     chat_container = st.container()
+    streaming_container = st.container()
     input_container = st.container()
     controls_container = st.container()
 
     with chat_container:
         st.subheader("Chat")
         
-        chat_placeholder = st.empty()
-        
-        with chat_placeholder.container():
-            for message in st.session_state.chat_history:
-                if message['role'] == 'assistant':
-                    st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{message["content"]}</div></div>', unsafe_allow_html=True)
-                else:
-                    st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-start;"><div class="user-message">{message["content"]}</div></div>', unsafe_allow_html=True)
+        for message in st.session_state.chat_history:
+            if message['role'] == 'assistant':
+                st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{message["content"]}</div></div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-start;"><div class="user-message">{message["content"]}</div></div>', unsafe_allow_html=True)
 
     with input_container:
         user_input = st.chat_input("Type your message...", key="user_input")
@@ -227,12 +225,14 @@ def main():
                 assistant_response = run_assistant()
 
             if assistant_response:
-                message_placeholder = st.empty()
-                full_response = ""
-                for chunk in stream_response(assistant_response):
-                    message_placeholder.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{chunk}</div></div>', unsafe_allow_html=True)
-                    time.sleep(0.05)
-                st.session_state.chat_history.append({"role": "assistant", "content": chunk})
+                with streaming_container:
+                    message_placeholder = st.empty()
+                    full_response = ""
+                    for chunk in stream_response(assistant_response):
+                        message_placeholder.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{chunk}</div></div>', unsafe_allow_html=True)
+                        time.sleep(0.05)
+                    full_response = chunk
+                st.session_state.chat_history.append({"role": "assistant", "content": full_response})
 
             st.experimental_rerun()
 
