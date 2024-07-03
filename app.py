@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.DEBUG)
 nltk.download('vader_lexicon', quiet=True)
 
 # Streamlit configuration
-st.set_page_config(page_title="VHL Make-a-change Coachbot", layout="wide")
+st.set_page_config(page_title="✨ VHL Change Coachbot", layout="wide")
 
 # Custom CSS
 st.markdown("""
@@ -64,7 +64,7 @@ def initialize_session_state():
     if "current_assistant_id" not in st.session_state:
         st.session_state.current_assistant_id = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"
     if "welcome_message_displayed" not in st.session_state:
-        st.session_state.welcome_message_displayed = False
+        st.session_state.welcome_message_displayed = True
     if "saved_chats" not in st.session_state:
         st.session_state.saved_chats = []
 
