@@ -216,7 +216,7 @@ def main():
                 st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{message["content"]}</div></div>', unsafe_allow_html=True)
             else:
                 st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-start;"><div class="user-message">{message["content"]}</div></div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True
+                st.markdown('</div>', unsafe_allow_html=True
 
     with input_container:
         user_input = st.chat_input("Type your message...", key="user_input")
