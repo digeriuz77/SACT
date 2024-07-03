@@ -212,20 +212,15 @@ def main():
     with chat_container:
         st.subheader(st.session_state.welcome_subheader)
         
-        # ... rest of the chat container code
-
-    with chat_container:
-        # Choose a random welcome message for the subheader
-        welcome_subheader = random.choice(welcome_messages)
-        st.subheader(welcome_subheader)
-        
         st.markdown('<div class="chat-container">', unsafe_allow_html=True)
         for message in reversed(st.session_state.chat_history):
             if message['role'] == 'assistant':
                 st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{message["content"]}</div></div>', unsafe_allow_html=True)
             else:
                 st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-start;"><div class="user-message">{message["content"]}</div></div>', unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ... rest of the function (streaming_container, input_container, controls_container)
 
     with input_container:
         user_input = st.chat_input("Type your message...", key="user_input")
