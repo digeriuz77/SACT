@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.DEBUG)
 nltk.download('vader_lexicon', quiet=True)
 
 # Streamlit configuration
-st.set_page_config(page_title="🌘 VHL Make-a-change Coachbot 🌖", layout="wide")
+st.set_page_config(page_title="🌘 VHL Change Coachbot 🌖", layout="wide")
 
 # Initialize session state
 def initialize_session_state():
@@ -76,6 +76,16 @@ def run_assistant():
     
     return messages.data[0].content[0].text.value
 
+def stream_response(response):
+    placeholder = st.empty()
+    full_response = ""
+    for chunk in response.split():
+        full_response += chunk + " "
+        placeholder.markdown(f"🐙 {full_response}▌")
+        time.sleep(0.05)
+    placeholder.markdown(f"🐙 {full_response}")
+    return full_response
+
 def analyze_sentiment(text):
     sia = SentimentIntensityAnalyzer()
     return sia.polarity_scores(text)['compound']
@@ -87,7 +97,8 @@ def rate_readiness():
     add_message_to_thread(f"Review the following chat log for change talk:\n{chat_log}")
     assistant_response = run_assistant()
     if assistant_response:
-        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+        full_response = stream_response(assistant_response)
+        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
     st.session_state.current_assistant_id = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"  # Reset to main assistant
     st.experimental_rerun()
 
@@ -98,7 +109,8 @@ def summarize_conversation():
     add_message_to_thread(f"Please summarize the following chat log:\n{chat_log}")
     assistant_response = run_assistant()
     if assistant_response:
-        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+        full_response = stream_response(assistant_response)
+        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
     st.session_state.current_assistant_id = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"  # Reset to main assistant
     st.experimental_rerun()
 
@@ -192,7 +204,8 @@ def main():
                 assistant_response = run_assistant()
 
             if assistant_response:
-                st.session_state["chat_history"].append({"role": "assistant", "content": assistant_response})
+                full_response = stream_response(assistant_response)
+                st.session_state["chat_history"].append({"role": "assistant", "content": full_response})
 
             st.experimental_rerun()
 
