@@ -18,7 +18,42 @@ logging.basicConfig(level=logging.DEBUG)
 nltk.download('vader_lexicon', quiet=True)
 
 # Streamlit configuration
-st.set_page_config(page_title="🌘 VHL Change Coachbot 🌖", layout="wide")
+st.set_page_config(page_title="VHL Make-a-change Coachbot", layout="wide")
+
+# Custom CSS
+st.markdown("""
+<style>
+    .user-message {
+        background-color: white;
+        color: black;
+        border-radius: 20px;
+        padding: 10px 15px;
+        margin: 5px 0;
+        max-width: 70%;
+        align-self: flex-start;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .assistant-message {
+        background-color: #007bff;
+        color: white;
+        border-radius: 20px;
+        padding: 10px 15px;
+        margin: 5px 0;
+        max-width: 70%;
+        align-self: flex-end;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .message-container {
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Initialize session state
 def initialize_session_state():
@@ -77,14 +112,10 @@ def run_assistant():
     return messages.data[0].content[0].text.value
 
 def stream_response(response):
-    placeholder = st.empty()
     full_response = ""
     for chunk in response.split():
         full_response += chunk + " "
-        placeholder.markdown(f"🐙 {full_response}▌")
-        time.sleep(0.05)
-    placeholder.markdown(f"🐙 {full_response}")
-    return full_response
+        yield full_response
 
 def analyze_sentiment(text):
     sia = SentimentIntensityAnalyzer()
@@ -97,8 +128,7 @@ def rate_readiness():
     add_message_to_thread(f"Review the following chat log for change talk:\n{chat_log}")
     assistant_response = run_assistant()
     if assistant_response:
-        full_response = stream_response(assistant_response)
-        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
     st.session_state.current_assistant_id = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"  # Reset to main assistant
     st.experimental_rerun()
 
@@ -109,8 +139,7 @@ def summarize_conversation():
     add_message_to_thread(f"Please summarize the following chat log:\n{chat_log}")
     assistant_response = run_assistant()
     if assistant_response:
-        full_response = stream_response(assistant_response)
-        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
     st.session_state.current_assistant_id = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"  # Reset to main assistant
     st.experimental_rerun()
 
@@ -169,43 +198,38 @@ def main():
 
     # Create a container for chat and controls
     chat_container = st.container()
+    input_container = st.container()
     controls_container = st.container()
 
     with chat_container:
         st.subheader("Chat")
+        
+        chat_placeholder = st.empty()
+        
+        with chat_placeholder.container():
+            for message in st.session_state.chat_history:
+                if message['role'] == 'assistant':
+                    st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{message["content"]}</div></div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-start;"><div class="user-message">{message["content"]}</div></div>', unsafe_allow_html=True)
 
-        # Display a random welcome message if chat history is empty
-        if not st.session_state.get('welcome_message_displayed', False):
-            welcome_message = random.choice(welcome_messages)
-            st.session_state.setdefault("chat_history", []).append({"role": "assistant", "content": welcome_message})
-            st.session_state["welcome_message_displayed"] = True
-
-        for i, message in enumerate(st.session_state["chat_history"]):
-            if message['role'] == 'assistant':
-                st.markdown(f"""
-                    <div class="chat-message assistant-message">
-                        🐙 {message['content']}
-                    </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                    <div class="chat-message user-message">
-                        <b>You:</b> {message['content']}
-                    </div>
-                """, unsafe_allow_html=True)
-
+    with input_container:
         user_input = st.chat_input("Type your message...", key="user_input")
 
         if user_input:
-            st.session_state["chat_history"].append({"role": "user", "content": user_input})
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
             add_message_to_thread(user_input)
 
             with st.spinner("Thinking..."):
                 assistant_response = run_assistant()
 
             if assistant_response:
-                full_response = stream_response(assistant_response)
-                st.session_state["chat_history"].append({"role": "assistant", "content": full_response})
+                message_placeholder = st.empty()
+                full_response = ""
+                for chunk in stream_response(assistant_response):
+                    message_placeholder.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{chunk}</div></div>', unsafe_allow_html=True)
+                    time.sleep(0.05)
+                st.session_state.chat_history.append({"role": "assistant", "content": chunk})
 
             st.experimental_rerun()
 
