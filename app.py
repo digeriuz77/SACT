@@ -13,6 +13,7 @@ import plotly.graph_objects as go
 import re
 from collections import Counter
 
+
 # Initialize logging
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -165,13 +166,43 @@ def analyze_sentiment(text):
     sia = SentimentIntensityAnalyzer()
     return sia.polarity_scores(text)['compound']
 
+def analyze_change_talk(text):
+    # Simplified keywords for each stage
+    stages = {
+        'pre': ['don\'t', 'won\'t', 'can\'t', 'not', 'never', 'no'],
+        'contemplation': ['might', 'maybe', 'consider', 'possibly'],
+        'planning': ['plan', 'intend', 'will', 'going to'],
+        'action': ['doing', 'started', 'began', 'implemented'],
+        'maintenance': ['continuing', 'maintaining', 'kept', 'sustained']
+    }
+    
+    words = re.findall(r'\w+', text.lower())
+    stage_counts = Counter()
+
+    for word in words:
+        for stage, keywords in stages.items():
+            if word in keywords:
+                stage_counts[stage] += 1
+    
+    total = sum(stage_counts.values())
+    if total == 0:
+        return {stage: 0 for stage in stages}, 0
+
+    percentages = {stage: (count / total) * 100 for stage, count in stage_counts.items()}
+    
+    # Calculate a simple score (higher stages have more weight)
+    score = sum(i * count for i, (stage, count) in enumerate(stage_counts.items())) / total
+    normalized_score = score / (len(stages) - 1)  # Normalize to 0-1 range
+
+    return percentages, normalized_score
+
 def rate_readiness():
     st.session_state.current_assistant_id = "asst_u4tbCd0KubyMYfKeD59bBxjM"
     save_chat()  # Save chat to create the log file
-    chat_log = " ".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
+    chat_log = " ".join([msg['content'] for msg in st.session_state.chat_history if msg['role'] == 'user'])
     
     # Analyze change talk locally
-    change_talk_score, stage_percentages = analyze_change_talk(chat_log)
+    stage_percentages, change_talk_score = analyze_change_talk(chat_log)
     
     # Visualize change talk score and stage percentages
     st.subheader("Change Talk Analysis")
@@ -194,7 +225,7 @@ def rate_readiness():
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
     
     st.session_state.current_assistant_id = "asst_RAJ5HUmKrqKXAoBDhacjvMy8"  # Reset to main assistant
-
+    
 def summarize_conversation():
     st.session_state.current_assistant_id = "asst_2IN1dkowoziRpYyzSdgJbPZY"
     save_chat()  # Save chat to create the log file
