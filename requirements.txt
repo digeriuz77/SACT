@@ -4,5 +4,5 @@ nltk==3.8.1
 reportlab==3.6.12
 llama-index
 llama-index-llms-openai
-nltk
+plotly==5.18.0
 pypdf
