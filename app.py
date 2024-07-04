@@ -213,44 +213,44 @@ def main():
 
     # Create containers
     chat_container = st.container()
+    streaming_container = st.container()
     input_container = st.container()
     controls_container = st.container()
-
-    with input_container:
-        user_input = st.chat_input("Type your message...", key="user_input")
 
     with chat_container:
         st.subheader(st.session_state.welcome_subheader)
         
-        st.markdown('<div class="chat-container" style="display: flex; flex-direction: column-reverse; height: 400px; overflow-y: auto;">', unsafe_allow_html=True)
-        
-        for message in st.session_state.chat_history:
+        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+        for message in reversed(st.session_state.chat_history):
             if message['role'] == 'assistant':
                 st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{message["content"]}</div></div>', unsafe_allow_html=True)
             else:
                 st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-start;"><div class="user-message">{message["content"]}</div></div>', unsafe_allow_html=True)
-        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ... rest of the function (streaming_container, input_container, controls_container)
+
+    with input_container:
+        user_input = st.chat_input("Type your message...", key="user_input")
+
         if user_input:
             st.session_state.chat_history.append({"role": "user", "content": user_input})
-            st.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-start;"><div class="user-message">{user_input}</div></div>', unsafe_allow_html=True)
-            
             add_message_to_thread(user_input)
-            
+
             with st.spinner("Thinking..."):
                 assistant_response = run_assistant()
-            
+
             if assistant_response:
-                message_placeholder = st.empty()
-                full_response = ""
-                for chunk in stream_response(assistant_response):
-                    full_response += chunk + " "
-                    message_placeholder.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{full_response}▌</div></div>', unsafe_allow_html=True)
-                    time.sleep(0.05)
-                
-                st.session_state.chat_history.append({"role": "assistant", "content": full_response.strip()})
-                message_placeholder.empty()
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+                with streaming_container:
+                    message_placeholder = st.empty()
+                    full_response = ""
+                    for chunk in stream_response(assistant_response):
+                        message_placeholder.markdown(f'<div class="message-container" style="display: flex; justify-content: flex-end;"><div class="assistant-message">{chunk}</div></div>', unsafe_allow_html=True)
+                        time.sleep(0.05)
+                    full_response = chunk
+                st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+
+            st.experimental_rerun()
 
     with controls_container:
         if st.session_state.get("chat_history"):
@@ -287,3 +287,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
